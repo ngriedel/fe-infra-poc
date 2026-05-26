@@ -19,6 +19,20 @@
     "format": "nx format:write",
     "format:check": "nx format:check"
   },
-  "devDependencies": {},
-  "dependencies": {}
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "eslint": "^10.4.0",
+    "nx": "^22.7.4",
+    "prettier": "^3.8.3",
+    "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "nx",
+      "esbuild",
+      "@parcel/watcher",
+      "@swc/core",
+      "unrs-resolver"
+    ]
+  }
 }
