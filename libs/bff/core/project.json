@@ -1,0 +1,9 @@
+{
+  "name": "core",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/bff/core/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:bff-core"],
+  "// targets": "to see all targets run: nx show project core --web",
+  "targets": {}
+}

@@ -1,23 +1,28 @@
-import Fastify from 'fastify';
-import { app } from './app/app';
+import { createBffServer } from '@aic/bff/core';
+import { env } from './env';
+import { registerAuthRoutes } from './auth/routes';
+import { registerHealthRoutes } from './routes/health';
 
-const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 3001;
+async function start(): Promise<void> {
+  const app = await createBffServer({
+    nodeEnv: env.NODE_ENV,
+    sessionSecret: env.SESSION_SECRET,
+    frontendOrigin: env.FRONTEND_ORIGIN,
+    logPretty: env.LOG_PRETTY,
+  });
 
-// Instantiate Fastify with some config
-const server = Fastify({
-  logger: true,
-});
+  await registerHealthRoutes(app);
+  await registerAuthRoutes(app, env.DEV_FIXED_OTP);
 
-// Register your application as a normal plugin.
-server.register(app);
-
-// Start listening.
-server.listen({ port, host }, (err) => {
-  if (err) {
-    server.log.error(err);
+  try {
+    await app.listen({ host: env.HOST, port: env.PORT });
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
-  } else {
-    console.log(`[ ready ] http://${host}:${port}`);
   }
+}
+
+start().catch((err) => {
+  console.error('Fatal startup error:', err);
+  process.exit(1);
 });
