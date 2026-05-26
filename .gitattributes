@@ -1,0 +1,37 @@
+# Default: normalize to LF in the repo
+* text=auto eol=lf
+
+# Explicit text files (defensive)
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.js        text eol=lf
+*.cjs       text eol=lf
+*.mjs       text eol=lf
+*.json      text eol=lf
+*.jsonc     text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.html      text eol=lf
+*.css       text eol=lf
+*.scss      text eol=lf
+*.md        text eol=lf
+*.sh        text eol=lf
+.editorconfig text eol=lf
+.gitignore    text eol=lf
+.gitattributes text eol=lf
+.npmrc        text eol=lf
+.nvmrc        text eol=lf
+.prettierrc   text eol=lf
+.prettierignore text eol=lf
+
+# Binary
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.pdf  binary

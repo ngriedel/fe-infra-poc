@@ -1,0 +1,24 @@
+{
+  "name": "aic",
+  "version": "0.0.0",
+  "private": true,
+  "description": "AIC POC — Nx monorepo with client + agent Angular frontends and per-frontend Fastify BFFs.",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.33.2",
+  "scripts": {
+    "dev": "nx run-many -t serve --parallel=4",
+    "build": "nx run-many -t build",
+    "test": "nx run-many -t test",
+    "lint": "nx run-many -t lint",
+    "typecheck": "nx run-many -t typecheck",
+    "graph": "nx graph",
+    "format": "nx format:write",
+    "format:check": "nx format:check"
+  },
+  "devDependencies": {},
+  "dependencies": {}
+}

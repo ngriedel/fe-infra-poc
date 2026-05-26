@@ -1,0 +1,72 @@
+{
+  "$schema": "./node_modules/nx/schemas/nx-schema.json",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "production": [
+      "default",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/vitest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s",
+      "!{projectRoot}/test-setup.[jt]s",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/eslint.config.[cm]?js"
+    ],
+    "sharedGlobals": [
+      "{workspaceRoot}/tsconfig.base.json",
+      "{workspaceRoot}/.editorconfig",
+      "{workspaceRoot}/.prettierrc"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "dependsOn": ["^build"],
+      "inputs": ["production", "^production"],
+      "cache": true
+    },
+    "test": {
+      "inputs": ["default", "^production"],
+      "cache": true
+    },
+    "lint": {
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json", "{workspaceRoot}/eslint.config.cjs"],
+      "cache": true
+    },
+    "typecheck": {
+      "inputs": ["default", "^production"],
+      "cache": true
+    },
+    "e2e": {
+      "inputs": ["default", "^production"]
+    }
+  },
+  "defaultBase": "main",
+  "useInferencePlugins": true,
+  "workspaceLayout": {
+    "appsDir": "apps",
+    "libsDir": "libs"
+  },
+  "generators": {
+    "@nx/angular:application": {
+      "style": "css",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "e2eTestRunner": "playwright",
+      "bundler": "esbuild",
+      "standalone": true,
+      "ssr": false
+    },
+    "@nx/angular:library": {
+      "style": "css",
+      "linter": "eslint",
+      "unitTestRunner": "jest",
+      "standalone": true
+    },
+    "@nx/angular:component": {
+      "style": "css",
+      "changeDetection": "OnPush",
+      "standalone": true
+    }
+  }
+}
