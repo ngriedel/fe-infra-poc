@@ -1,23 +1,45 @@
-import Fastify from 'fastify';
-import { app } from './app/app';
+import { createBffServer } from '@aic/bff/core';
+import { env } from './env';
+import { registerAuthRoutes } from './auth/routes';
+import { registerHealthRoutes } from './routes/health';
+import { StubOidcProvider } from './auth/stub-provider';
+import type { OidcProvider } from './auth/oidc-provider';
 
-const host = process.env.HOST ?? 'localhost';
-const port = process.env.PORT ? Number(process.env.PORT) : 3002;
-
-// Instantiate Fastify with some config
-const server = Fastify({
-  logger: true,
-});
-
-// Register your application as a normal plugin.
-server.register(app);
-
-// Start listening.
-server.listen({ port, host }, (err) => {
-  if (err) {
-    server.log.error(err);
-    process.exit(1);
-  } else {
-    console.log(`[ ready ] http://${host}:${port}`);
+function buildProvider(bffOrigin: string): OidcProvider {
+  switch (env.OIDC_MODE) {
+    case 'stub':
+      return new StubOidcProvider(bffOrigin);
+    case 'azure':
+      throw new Error(
+        'Azure OIDC provider not yet implemented — wire openid-client + AZURE_* env vars',
+      );
   }
+}
+
+async function start(): Promise<void> {
+  const app = await createBffServer({
+    nodeEnv: env.NODE_ENV,
+    sessionSecret: env.SESSION_SECRET,
+    frontendOrigin: env.FRONTEND_ORIGIN,
+    logPretty: env.LOG_PRETTY,
+  });
+
+  const bffOrigin = `http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`;
+  const provider = buildProvider(bffOrigin);
+
+  await registerHealthRoutes(app);
+  await registerAuthRoutes(app, { provider, postLoginDefault: env.POST_LOGIN_DEFAULT });
+
+  try {
+    await app.listen({ host: env.HOST, port: env.PORT });
+    app.log.info({ mode: env.OIDC_MODE }, 'agent-bff ready');
+  } catch (err) {
+    app.log.error(err);
+    process.exit(1);
+  }
+}
+
+start().catch((err) => {
+  console.error('Fatal startup error:', err);
+  process.exit(1);
 });
