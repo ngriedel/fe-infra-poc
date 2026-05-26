@@ -20,6 +20,13 @@
     "format:check": "nx format:check"
   },
   "devDependencies": {
+    "@nx/angular": "22.7.4",
+    "@nx/eslint": "22.7.4",
+    "@nx/jest": "22.7.4",
+    "@nx/js": "22.7.4",
+    "@nx/node": "22.7.4",
+    "@nx/playwright": "22.7.4",
+    "@nx/workspace": "22.7.4",
     "@types/node": "^25.9.1",
     "eslint": "^10.4.0",
     "nx": "^22.7.4",
