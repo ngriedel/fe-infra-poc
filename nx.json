@@ -100,9 +100,9 @@
       "ssr": false
     },
     "@nx/angular:library": {
-      "style": "css",
       "linter": "eslint",
       "unitTestRunner": "jest",
+      "style": "css",
       "standalone": true
     },
     "@nx/angular:component": {

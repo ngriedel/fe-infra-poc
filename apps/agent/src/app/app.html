@@ -1,2 +1,15 @@
-<agent-nx-welcome></agent-nx-welcome>
-<router-outlet></router-outlet>
+<main class="container mx-auto flex min-h-screen flex-col items-center justify-center gap-6 p-8">
+  <h1 class="text-3xl font-semibold tracking-tight">{{ title }}</h1>
+  <p class="text-sm text-muted-foreground">
+    Denser palette / smaller radius vs. the client app — same shared component.
+  </p>
+
+  <div class="flex flex-wrap items-center gap-2">
+    <button hlmBtn size="sm">New claim</button>
+    <button hlmBtn size="sm" variant="outline">Search policies</button>
+    <button hlmBtn size="sm" variant="ghost">Settings</button>
+    <button hlmBtn size="sm" variant="destructive">Escalate</button>
+  </div>
+
+  <router-outlet></router-outlet>
+</main>

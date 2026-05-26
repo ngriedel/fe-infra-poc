@@ -24,7 +24,10 @@
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true,
     "forceConsistentCasingInFileNames": true,
-    "paths": {}
+    "paths": {
+      "@aic/shared/ui-tailwind-preset": ["./libs/shared/ui-tailwind-preset/src/index.ts"],
+      "@aic/shared/ui": ["./libs/shared/ui/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }
