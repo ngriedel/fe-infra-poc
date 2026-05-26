@@ -48,6 +48,10 @@
     "serve": {
       "continuous": true,
       "executor": "@angular/build:dev-server",
+      "options": {
+        "port": 4201,
+        "proxyConfig": "apps/agent/proxy.conf.json"
+      },
       "configurations": {
         "production": {
           "buildTarget": "agent:build:production"
@@ -74,7 +78,7 @@
       "executor": "@nx/web:file-server",
       "options": {
         "buildTarget": "agent:build",
-        "port": 4200,
+        "port": 4201,
         "staticFilePath": "dist/apps/agent/browser",
         "spa": true
       }

@@ -68,7 +68,8 @@
       "dependsOn": ["build"],
       "options": {
         "buildTarget": "client-bff:build",
-        "runBuildTargetDependencies": false
+        "runBuildTargetDependencies": false,
+        "runtimeArgs": ["--env-file=apps/client-bff/.env"]
       },
       "configurations": {
         "development": {
