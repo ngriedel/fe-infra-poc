@@ -18,6 +18,7 @@ A living record of the big calls behind the AIC POC, with the reasoning that goe
 | Shared contracts | Zod schemas in a shared lib | ✅ |
 | Client auth | Magic link + OTP (passwordless) | ✅ |
 | Agent auth | Enterprise SSO via OIDC against Azure AD | ✅ |
+| Sessions | Stateless encrypted cookie now; server-side store for agent BFF later | 🔄 |
 | Domain model | Pure TypeScript lib, framework-free | ✅ |
 | State mgmt | Signals + lightweight per-feature stores | 🔄 |
 | Realtime | Not in POC scope | 🟡 |
@@ -201,6 +202,30 @@ Agents are employees on a managed corporate identity. They should sign in with t
 - Local dev needs either a dev tenant or a stub IdP — handled with a dev-mode flag in the BFF.
 
 **Bottom line:** internal users belong on enterprise SSO. Anything else duplicates identity management the company already pays for.
+
+---
+
+## Why stateless encrypted-cookie sessions (for now)
+
+Both BFFs currently use `@fastify/secure-session` — the entire session is encrypted into the cookie, and the server holds no session state. No Redis, no database.
+
+**Pros**
+
+- **Zero session infrastructure** for the POC — nothing to stand up, monitor, or back up.
+- **Free horizontal scaling** — any BFF instance can read any cookie; no shared store, no sticky sessions.
+- **Good enough for the client BFF long-term** — consumer sessions are low-sensitivity and there are no downstream tokens to conceal.
+
+**Cons (and the plan)**
+
+- **No server-side revocation** — a stolen cookie stays valid until expiry. Acceptable for consumer sessions; not for staff.
+- **~4 KB cookie ceiling** — fine for a `SessionUser`, too small once you stash OIDC access/refresh tokens.
+- **Key rotation invalidates all sessions.**
+
+**The split:** the client BFF likely keeps cookies forever (low-sensitivity, no tokens). The **agent BFF moves to a server-side store** (Redis/Valkey on Azure, or Postgres if we already run it) at the same time we wire the real Azure provider — because that's when we start holding tokens that must stay server-side and staff sessions that must be revocable. The swap is localized to `libs/bff/core` thanks to the `createBffServer` factory + `requireSession` guard; no routes or frontend code move.
+
+Full reasoning, the model comparison, and store alternatives: **[session-strategy.md](session-strategy.md)**.
+
+**Bottom line:** don't buy session infrastructure before the requirement that needs it arrives. Cookies now; a store for the agent BFF exactly when token custody + revocation land.
 
 ---
 

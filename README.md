@@ -108,6 +108,7 @@ libs/
 docs/
   architecture-decisions.md   # the pitch / decision log
   bff-latency.md              # latency reasoning for the BFF pattern
+  session-strategy.md         # cookie vs server-side sessions; do we need Redis?
 ```
 
 ## Path aliases
