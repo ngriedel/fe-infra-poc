@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { HlmButtonDirective } from '@aic/shared/ui';
 import { AuthService } from './auth.service';
 
 @Component({
   selector: 'client-login-page',
   standalone: true,
-  imports: [FormsModule, HlmButtonDirective],
+  imports: [FormsModule, RouterLink, HlmButtonDirective],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-8">
@@ -70,6 +70,14 @@ import { AuthService } from './auth.service';
       @if (error()) {
         <p class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error() }}</p>
       }
+
+      <p class="text-center text-xs text-muted-foreground">
+        <a
+          routerLink="/signal-forms"
+          class="underline underline-offset-4 hover:text-foreground"
+          >View the Signal Forms demo →</a
+        >
+      </p>
     </main>
   `,
 })

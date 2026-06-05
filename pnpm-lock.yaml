@@ -53,6 +53,15 @@ importers:
       '@lucide/angular':
         specifier: ^1.16.0
         version: 1.16.0(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))
+      '@maskito/angular':
+        specifier: ^5.3.0
+        version: 5.3.0(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(@angular/forms@21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(@angular/platform-browser@21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)))(rxjs@7.8.2))(@maskito/core@5.3.0)
+      '@maskito/core':
+        specifier: ^5.3.0
+        version: 5.3.0
+      '@maskito/kit':
+        specifier: ^5.3.0
+        version: 5.3.0(@maskito/core@5.3.0)
       '@spartan-ng/brain':
         specifier: 0.0.1-alpha.697
         version: 0.0.1-alpha.697(be61cc5f9c6d782396460e373779dc29)
@@ -1967,6 +1976,21 @@ packages:
   '@lukeed/ms@2.0.2':
     resolution: {integrity: sha512-9I2Zn6+NJLfaGoz9jN3lpwDgAYvfGeNYdbAIjJOqzs4Tpc+VU3Jqq4IofSUBKajiDS8k9fZIg18/z13mpk1bsA==}
     engines: {node: '>=8'}
+
+  '@maskito/angular@5.3.0':
+    resolution: {integrity: sha512-TQOyHcKrBslAKdqCvgHKOgG0IYmzq3k1ipG5hRiM32Tr4wMpQete5bbyCqBr1mjl2TcpK/7ZqwVzEO/UE+c4YQ==}
+    peerDependencies:
+      '@angular/core': '>=19.0.0'
+      '@angular/forms': '>=19.0.0'
+      '@maskito/core': ^5.3.0
+
+  '@maskito/core@5.3.0':
+    resolution: {integrity: sha512-gzI8lowBuHDoRy5+eVRqBVX9Iptq3poYegZWGKwA2UF8zdN7V9SgWdPS3valW8EQZANaJmnuZMahqYXIwZnZ6Q==}
+
+  '@maskito/kit@5.3.0':
+    resolution: {integrity: sha512-hvHeg8F0eUWYkrPmRByZ00W9c8QRTZUBCoqKI+2Ciws5kF9KuBy9LYSDHpHzkuRXjAxaMJrYbkNf8TTMn0ytEw==}
+    peerDependencies:
+      '@maskito/core': ^5.3.0
 
   '@modelcontextprotocol/sdk@1.26.0':
     resolution: {integrity: sha512-Y5RmPncpiDtTXDbLKswIJzTqu2hyBKxTNsgKqKclDbhIgg1wgtf1fRuvxgTnRfcnxtvvgbIEcqUOzZrJ6iSReg==}
@@ -10424,6 +10448,19 @@ snapshots:
       tslib: 2.8.1
 
   '@lukeed/ms@2.0.2': {}
+
+  '@maskito/angular@5.3.0(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(@angular/forms@21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(@angular/platform-browser@21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)))(rxjs@7.8.2))(@maskito/core@5.3.0)':
+    dependencies:
+      '@angular/core': 21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)
+      '@angular/forms': 21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(@angular/platform-browser@21.2.14(@angular/common@21.2.14(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.14(@angular/compiler@21.2.14)(rxjs@7.8.2)))(rxjs@7.8.2)
+      '@maskito/core': 5.3.0
+      tslib: 2.8.1
+
+  '@maskito/core@5.3.0': {}
+
+  '@maskito/kit@5.3.0(@maskito/core@5.3.0)':
+    dependencies:
+      '@maskito/core': 5.3.0
 
   '@modelcontextprotocol/sdk@1.26.0(zod@4.3.6)':
     dependencies:
