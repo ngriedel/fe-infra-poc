@@ -8,11 +8,13 @@ export default [
   {
     files: ['**/*.ts'],
     rules: {
+      // This lib follows the Spartan NG ("Helm") convention: `hlm` selector
+      // prefix and inputs deliberately aliased to `class` / the selector name.
       '@angular-eslint/directive-selector': [
         'error',
         {
           type: 'attribute',
-          prefix: 'ui',
+          prefix: 'hlm',
           style: 'camelCase',
         },
       ],
@@ -20,15 +22,20 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'ui',
+          prefix: 'hlm',
           style: 'kebab-case',
         },
       ],
+      // Spartan primitives intentionally alias inputs (e.g. `class`, `hlmBtn`).
+      '@angular-eslint/no-input-rename': 'off',
     },
   },
   {
     files: ['**/*.html'],
-    // Override or add rules here
-    rules: {},
+    rules: {
+      // Form-field wrappers associate a label by projecting the control inside
+      // the <label> via <ng-content>, which the static rule can't see.
+      '@angular-eslint/template/label-has-associated-control': 'off',
+    },
   },
 ];

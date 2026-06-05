@@ -14,7 +14,14 @@ import {
   validate,
 } from '@angular/forms/signals';
 import { MaskitoDirective } from '@maskito/angular';
-import { HlmButtonDirective, numberMask } from '@aic/shared/ui';
+import {
+  HlmButtonDirective,
+  HlmErrorComponent,
+  HlmFormFieldComponent,
+  HlmInputDirective,
+  HlmLabelDirective,
+  numberMask,
+} from '@aic/shared/ui';
 import {
   type ColorOption,
   type OtherColor,
@@ -58,26 +65,18 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
 @Component({
   selector: 'client-signal-forms-demo',
   standalone: true,
-  imports: [FormField, JsonPipe, RouterLink, MaskitoDirective, HlmButtonDirective],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: [
-    `
-      .field-input {
-        @apply h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-          ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none
-          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
-      }
-      .field-input[aria-invalid='true'] {
-        @apply border-destructive focus-visible:ring-destructive;
-      }
-      .field-error {
-        @apply text-xs font-medium text-destructive;
-      }
-      .field-label {
-        @apply text-sm font-medium;
-      }
-    `,
+  imports: [
+    FormField,
+    JsonPipe,
+    RouterLink,
+    MaskitoDirective,
+    HlmButtonDirective,
+    HlmFormFieldComponent,
+    HlmInputDirective,
+    HlmLabelDirective,
+    HlmErrorComponent,
   ],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
       <header class="space-y-1">
@@ -97,111 +96,47 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
         <p class="text-sm text-muted-foreground">Loading profile from the server…</p>
       } @else {
         <form (submit)="onSubmit($event)" class="space-y-5" novalidate>
-          <!-- Name -->
-          <label class="block space-y-1">
-            <span class="field-label">First name</span>
-            <input
-              type="text"
-              class="field-input"
-              [formField]="profileForm.name"
-              [attr.aria-invalid]="isInvalid(profileForm.name)"
-            />
-            @if (isInvalid(profileForm.name)) {
-              @for (e of profileForm.name().errors(); track e.kind) {
-                <span class="field-error">{{ e.message }}</span>
-              }
-            }
-          </label>
+          <hlm-form-field label="First name">
+            <input hlmInput type="text" [formField]="profileForm.name" />
+          </hlm-form-field>
 
-          <!-- Surname (with a custom validator) -->
-          <label class="block space-y-1">
-            <span class="field-label">Surname</span>
-            <input
-              type="text"
-              class="field-input"
-              [formField]="profileForm.surname"
-              [attr.aria-invalid]="isInvalid(profileForm.surname)"
-            />
-            @if (isInvalid(profileForm.surname)) {
-              @for (e of profileForm.surname().errors(); track e.kind) {
-                <span class="field-error">{{ e.message }}</span>
-              }
-            }
-          </label>
+          <hlm-form-field label="Surname">
+            <input hlmInput type="text" [formField]="profileForm.surname" />
+          </hlm-form-field>
 
-          <!-- Email -->
-          <label class="block space-y-1">
-            <span class="field-label">Email</span>
-            <input
-              type="email"
-              class="field-input"
-              [formField]="profileForm.email"
-              [attr.aria-invalid]="isInvalid(profileForm.email)"
-            />
-            @if (isInvalid(profileForm.email)) {
-              @for (e of profileForm.email().errors(); track e.kind) {
-                <span class="field-error">{{ e.message }}</span>
-              }
-            }
-          </label>
+          <hlm-form-field label="Email">
+            <input hlmInput type="email" [formField]="profileForm.email" />
+          </hlm-form-field>
 
-          <!-- Age -->
-          <label class="block space-y-1">
-            <span class="field-label">Age</span>
-            <input
-              type="number"
-              class="field-input"
-              [formField]="profileForm.age"
-              [attr.aria-invalid]="isInvalid(profileForm.age)"
-            />
-            @if (isInvalid(profileForm.age)) {
-              @for (e of profileForm.age().errors(); track e.kind) {
-                <span class="field-error">{{ e.message }}</span>
-              }
-            }
-          </label>
+          <hlm-form-field label="Age">
+            <input hlmInput type="number" [formField]="profileForm.age" />
+          </hlm-form-field>
 
-          <!-- SPIKE: Maskito number mask composed with [formField] -->
-          <label class="block space-y-1">
-            <span class="field-label">Amount (Maskito number mask)</span>
+          <hlm-form-field label="Amount (Maskito number mask)">
             <input
+              hlmInput
               type="text"
               inputmode="numeric"
-              class="field-input"
               data-testid="amount"
               [maskito]="numberMask"
               [formField]="profileForm.amount"
             />
-            <span class="text-xs text-muted-foreground">
-              Type digits — grouped with commas; the model stores the masked string.
-            </span>
-          </label>
+          </hlm-form-field>
 
-          <!-- Colour dropdown -->
-          <label class="block space-y-1">
-            <span class="field-label">Favourite colour</span>
-            <select
-              class="field-input"
-              [formField]="profileForm.color"
-              [attr.aria-invalid]="isInvalid(profileForm.color)"
-            >
+          <hlm-form-field label="Favourite colour">
+            <select hlmInput [formField]="profileForm.color">
               <option value="" disabled>Choose a colour…</option>
               <option value="red">Red</option>
               <option value="green">Green</option>
               <option value="blue">Blue</option>
               <option value="other">Other</option>
             </select>
-            @if (isInvalid(profileForm.color)) {
-              @for (e of profileForm.color().errors(); track e.kind) {
-                <span class="field-error">{{ e.message }}</span>
-              }
-            }
-          </label>
+          </hlm-form-field>
 
-          <!-- Radio: only shown (and only required) when "Other" is selected -->
+          <!-- Radio group: a fieldset reuses <hlm-error> directly for its message -->
           @if (profileForm.color().value() === 'other') {
-            <fieldset class="space-y-2">
-              <legend class="field-label">Which other colour?</legend>
+            <fieldset class="space-y-1.5">
+              <legend hlmLabel>Which other colour?</legend>
               <div class="flex flex-wrap gap-4">
                 @for (opt of otherColors; track opt.value) {
                   <label class="flex items-center gap-2 text-sm">
@@ -215,11 +150,7 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
                   </label>
                 }
               </div>
-              @if (isInvalid(profileForm.otherColor)) {
-                @for (e of profileForm.otherColor().errors(); track e.kind) {
-                  <span class="field-error">{{ e.message }}</span>
-                }
-              }
+              <hlm-error [field]="profileForm.otherColor" />
             </fieldset>
           }
 
@@ -316,11 +247,6 @@ export class SignalFormsDemoComponent implements OnInit {
       this.savedId.set(res.id);
       return undefined; // no server-side validation errors to report back
     });
-  }
-
-  /** A field is only "invalid" to the user once they've interacted with it. */
-  protected isInvalid(field: { (): { touched(): boolean; invalid(): boolean } }): boolean {
-    return field().touched() && field().invalid();
   }
 
   private toDto(m: ProfileFormModel): ProfileDto {
