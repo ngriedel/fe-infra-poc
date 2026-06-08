@@ -1,8 +1,5 @@
 import { z } from 'zod';
-import {
-  sessionResponseSchema,
-} from '@aic/bff/contracts';
-import { badRequest, type BffServer, requireSession } from '@aic/bff/core';
+import { badRequest, type BffServer } from '@aic/bff/core';
 import type { OidcProvider } from './oidc-provider';
 
 const STATE_COOKIE = 'oidc_state';
@@ -16,9 +13,21 @@ const callbackQuerySchema = z.object({
   state: z.string().min(1),
 });
 
-export async function registerAuthRoutes(
+export interface SsoAuthRoutesOptions {
+  provider: OidcProvider;
+  /** Where to send the user after login when no `returnTo` was supplied. */
+  postLoginDefault: string;
+}
+
+/**
+ * Register the SSO login flow (`/api/auth/login` + `/api/auth/callback`).
+ *
+ * Session read + logout are NOT here — compose `registerSessionRoutes`
+ * from `@aic/bff/core` alongside this.
+ */
+export async function registerSsoAuthRoutes(
   app: BffServer,
-  opts: { provider: OidcProvider; postLoginDefault: string },
+  opts: SsoAuthRoutesOptions,
 ): Promise<void> {
   /**
    * Begin login. Saves state + returnTo in a short-lived signed cookie,
@@ -69,18 +78,5 @@ export async function registerAuthRoutes(
 
       return reply.redirect(returnTo || opts.postLoginDefault);
     },
-  });
-
-  /** Return the current session user (or 401). */
-  app.get('/api/auth/session', {
-    preHandler: requireSession,
-    schema: { response: { 200: sessionResponseSchema } },
-    handler: async (req) => ({ user: req.user ?? null }),
-  });
-
-  /** Clear the session. */
-  app.post('/api/auth/logout', async (req) => {
-    req.session.delete();
-    return { user: null };
   });
 }

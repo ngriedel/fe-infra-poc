@@ -7,6 +7,10 @@ export interface OidcAuthorizeResult {
   state: string;
 }
 
+/**
+ * The per-app seam for SSO. An implementation owns which IdP is used and how
+ * its claims map to our `SessionUser`; the shared routes own the wiring.
+ */
 export interface OidcProvider {
   /** Begin a login. Caller is responsible for persisting `state` in a cookie. */
   authorize(returnTo: string): Promise<OidcAuthorizeResult>;

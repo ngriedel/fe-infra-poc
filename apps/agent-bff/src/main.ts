@@ -1,9 +1,7 @@
-import { createBffServer } from '@aic/bff/core';
+import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
+import { registerSsoAuthRoutes, StubOidcProvider, type OidcProvider } from '@aic/bff/auth-sso';
 import { env } from './env';
-import { registerAuthRoutes } from './auth/routes';
 import { registerHealthRoutes } from './routes/health';
-import { StubOidcProvider } from './auth/stub-provider';
-import type { OidcProvider } from './auth/oidc-provider';
 
 function buildProvider(bffOrigin: string): OidcProvider {
   switch (env.OIDC_MODE) {
@@ -28,7 +26,8 @@ async function start(): Promise<void> {
   const provider = buildProvider(bffOrigin);
 
   await registerHealthRoutes(app);
-  await registerAuthRoutes(app, { provider, postLoginDefault: env.POST_LOGIN_DEFAULT });
+  await registerSessionRoutes(app);
+  await registerSsoAuthRoutes(app, { provider, postLoginDefault: env.POST_LOGIN_DEFAULT });
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });

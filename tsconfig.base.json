@@ -28,7 +28,8 @@
       "@aic/shared/ui-tailwind-preset": ["./libs/shared/ui-tailwind-preset/src/index.ts"],
       "@aic/shared/ui": ["./libs/shared/ui/src/index.ts"],
       "@aic/bff/contracts": ["./libs/bff/contracts/src/index.ts"],
-      "@aic/bff/core": ["./libs/bff/core/src/index.ts"]
+      "@aic/bff/core": ["./libs/bff/core/src/index.ts"],
+      "@aic/bff/auth-sso": ["./libs/bff/auth-sso/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

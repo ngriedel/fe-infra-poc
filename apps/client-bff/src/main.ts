@@ -1,4 +1,4 @@
-import { createBffServer } from '@aic/bff/core';
+import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
 import { env } from './env';
 import { registerAuthRoutes } from './auth/routes';
 import { registerHealthRoutes } from './routes/health';
@@ -12,6 +12,7 @@ async function start(): Promise<void> {
   });
 
   await registerHealthRoutes(app);
+  await registerSessionRoutes(app);
   await registerAuthRoutes(app, env.DEV_FIXED_OTP);
 
   try {

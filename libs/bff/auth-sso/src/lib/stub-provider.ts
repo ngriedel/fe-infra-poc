@@ -22,7 +22,14 @@ export class StubOidcProvider implements OidcProvider {
     return { redirectUrl: callback.toString(), state };
   }
 
-  async callback({ state, expectedState }: { code: string; state: string; expectedState: string }): Promise<SessionUser> {
+  async callback({
+    state,
+    expectedState,
+  }: {
+    code: string;
+    state: string;
+    expectedState: string;
+  }): Promise<SessionUser> {
     if (state !== expectedState) {
       throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state did not match');
     }

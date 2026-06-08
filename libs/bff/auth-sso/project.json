@@ -1,0 +1,9 @@
+{
+  "name": "auth-sso",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/bff/auth-sso/src",
+  "projectType": "library",
+  "tags": ["scope:shared", "type:bff-auth"],
+  "// targets": "to see all targets run: nx show project auth-sso --web",
+  "targets": {}
+}

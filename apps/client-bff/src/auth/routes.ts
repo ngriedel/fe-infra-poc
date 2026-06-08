@@ -61,21 +61,6 @@ export async function registerAuthRoutes(app: BffServer, devFixedOtp: string): P
     },
   });
 
-  /** Return the current session user (or 401). */
-  app.get('/api/auth/session', {
-    preHandler: requireSession,
-    schema: { response: { 200: sessionResponseSchema } },
-    handler: async (req) => {
-      return { user: req.user ?? null };
-    },
-  });
-
-  /** Clear the session. */
-  app.post('/api/auth/logout', async (req) => {
-    req.session.delete();
-    return { user: null };
-  });
-
   // Helpful error when /api/auth/session is hit unauthenticated and we want
   // a typed 401 envelope rather than the generic one.
   app.setNotFoundHandler({ preHandler: requireSession }, async () => {
