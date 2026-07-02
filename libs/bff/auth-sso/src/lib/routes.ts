@@ -1,17 +1,12 @@
-import { z } from 'zod';
+import {
+  oidcCallbackQuerySchema,
+  oidcLoginQuerySchema,
+  safeReturnToSchema,
+} from '@aic/bff/contracts';
 import { badRequest, type BffServer } from '@aic/bff/core';
 import type { OidcProvider } from './oidc-provider';
 
 const STATE_COOKIE = 'oidc_state';
-
-const loginQuerySchema = z.object({
-  returnTo: z.string().default('/'),
-});
-
-const callbackQuerySchema = z.object({
-  code: z.string().min(1),
-  state: z.string().min(1),
-});
 
 export interface SsoAuthRoutesOptions {
   provider: OidcProvider;
@@ -34,9 +29,9 @@ export async function registerSsoAuthRoutes(
    * then redirects to the IdP authorize URL.
    */
   app.get('/api/auth/login', {
-    schema: { querystring: loginQuerySchema },
+    schema: { querystring: oidcLoginQuerySchema },
     handler: async (req, reply) => {
-      const { returnTo } = req.query;
+      const { returnTo } = req.query; // sanitized to a safe same-origin path by the schema
       const { redirectUrl, state } = await opts.provider.authorize(returnTo);
       reply.setCookie(STATE_COOKIE, JSON.stringify({ state, returnTo }), {
         httpOnly: true,
@@ -54,7 +49,7 @@ export async function registerSsoAuthRoutes(
    * via the provider, set the session cookie, then redirect to returnTo.
    */
   app.get('/api/auth/callback', {
-    schema: { querystring: callbackQuerySchema },
+    schema: { querystring: oidcCallbackQuerySchema },
     handler: async (req, reply) => {
       const cookieRaw = req.cookies[STATE_COOKIE];
       if (!cookieRaw) throw badRequest('OIDC_STATE_MISMATCH', 'Missing OIDC state cookie');
@@ -76,7 +71,11 @@ export async function registerSsoAuthRoutes(
       req.session.set('user', user);
       reply.clearCookie(STATE_COOKIE, { path: '/' });
 
-      return reply.redirect(returnTo || opts.postLoginDefault);
+      // Defense in depth: returnTo was sanitized at login, but re-validate here
+      // so we never redirect to a non-same-origin target (safeReturnToSchema
+      // coerces anything unsafe back to '/').
+      const safeReturnTo = safeReturnToSchema.parse(returnTo);
+      return reply.redirect(safeReturnTo || opts.postLoginDefault);
     },
   });
 }

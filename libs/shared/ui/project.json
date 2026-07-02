@@ -16,6 +16,9 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint"
+    },
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"
     }
   }
 }

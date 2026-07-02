@@ -1,0 +1,95 @@
+flowchart TB
+%% AIC POC — runtime-centric architecture (v1)
+%% CENTRE = Frontend -> BFF -> auth -> enterprise + session/DB.
+%% thick ==> = live runtime request flow · dotted -.-> = consumes shared code · normal --> = internal steps / deploy
+
+  %% ===== peripheral: design system + Figma pipeline (governed) =====
+  subgraph DS["Design system (shared) · GOVERNED — senior/lead review on core libs &amp; tokens"]
+    direction TB
+    FIGMA["Figma<br/>design tokens (source of truth)"]
+    GHUB["GitHub<br/>token change → PR + review<br/>(Absa-wide tokens locked)"]
+    TOK["shared/ui-tailwind-preset<br/>design tokens"]
+    UI["shared/ui · Spartan + Tailwind<br/>base components (button, form-field)"]
+    HDR["example: absa-header<br/>shared Angular component"]
+    FIGMA -->|export tokens| GHUB
+    GHUB -->|tokens land in code| TOK
+    TOK -->|themes| UI
+    UI -->|composed into| HDR
+  end
+
+  %% ===== CENTRE 1: frontends =====
+  subgraph FE["Frontends · Angular zoneless · Signal Forms"]
+    direction TB
+    ACT["Activate — apps/client<br/>public · OTP / magic-link"]
+    JDJ["JDJ — apps/jdj (planned)<br/>dealer/broker · OIDC user+pass"]
+    AGT["Agent — apps/agent<br/>staff · SSO"]
+  end
+  HDR -.->|e.g. absa-header reused by every frontend| FE
+  UI  -.->|base components + tokens| FE
+
+  %% ===== CENTRE 2: the BFF request pipeline (the detail) =====
+  FE ==>|"HTTPS · same-origin<br/>encrypted http-only session cookie<br/>(session id only, no tokens)"| SEC
+
+  subgraph BFF["BFF · Fastify — ONE PER FRONTEND<br/>(a separate client-bff / jdj-bff / agent-bff instance + container each)"]
+    direction TB
+    SEC["① security headers + CORS<br/>(bff/core)"]
+    SESS["② session middleware<br/>cookie ⇄ server-side session<br/>(bff/core)"]
+    AUTHX["③ auth strategy per app<br/>OTP · OIDC · SSO<br/>(bff/auth-otp · auth-oidc · auth-sso)"]
+    VAL["④ validate req/res with Zod<br/>(bff/contracts)"]
+    AGG["⑤ call enterprise APIs<br/>(only the fields the FE needs)"]
+    SEC --> SESS --> AUTHX --> VAL --> AGG
+  end
+
+  %% ===== CENTRE 3: session store (the BFF's ONLY direct DB) =====
+  REDIS[("Session store — BFF's only direct DB<br/>enterprise-standard (Postgres / Mongo)<br/>server-side session state")]
+  SESS <==>|"read / write session<br/>by session id"| REDIS
+
+  %% ===== CENTRE 4: enterprise layer =====
+  subgraph ENT["Enterprise layer"]
+    direction TB
+    IDP["Azure AD / Entra<br/>OIDC identity provider"]
+    MAIL["Email / OTP delivery<br/>magic-link codes"]
+    API["Enterprise APIs<br/>core business / data"]
+  end
+  AUTHX ==>|"OIDC / SSO token exchange"| IDP
+  AUTHX ==>|"send / verify OTP"| MAIL
+  AGG   ==>|"data requests"| API
+
+  %% ===== peripheral: shared BFF libs feed the pipeline =====
+  subgraph BLIB["Shared BFF libs"]
+    direction TB
+    CORE["bff/core"]
+    CONTR["bff/contracts (Zod)"]
+    AUTHL["bff/auth-sso · auth-oidc · auth-otp"]
+  end
+  CORE  -.-> SEC
+  CORE  -.-> SESS
+  AUTHL -.-> AUTHX
+  CONTR -.-> VAL
+  CONTR -.->|shared FE⇄BFF types| FE
+
+  %% ===== peripheral: monorepo + CI/CD =====
+  subgraph PLAT["Nx monorepo · pnpm · TypeScript end-to-end"]
+    direction TB
+    NX["nx affected: lint · test · build · contract checks"]
+    GOCD["GoCD pipelines (per-app, incremental)"]
+    CONT["Per-app containers (×6)"]
+    NX --> GOCD --> CONT
+  end
+
+  %% ===== styling =====
+  classDef fe fill:#e3f0ff,stroke:#1565c0,color:#0a2540;
+  classDef bff fill:#e7f7ec,stroke:#2e7d32,color:#0a2e15;
+  classDef lib fill:#fff5e0,stroke:#ef6c00,color:#3a2300;
+  classDef ent fill:#f0e9ff,stroke:#5e35b1,color:#220a40;
+  classDef store fill:#fdecea,stroke:#c62828,color:#3a0a08;
+  classDef plat fill:#ececec,stroke:#546e7a,color:#1a2227;
+  classDef design fill:#fde7f3,stroke:#c2185b,color:#3a0a22;
+
+  class ACT,JDJ,AGT fe;
+  class SEC,SESS,AUTHX,VAL,AGG bff;
+  class TOK,UI,HDR,CORE,CONTR,AUTHL lib;
+  class FIGMA,GHUB design;
+  class IDP,MAIL,API ent;
+  class REDIS store;
+  class NX,GOCD,CONT plat;

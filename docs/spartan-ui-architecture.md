@@ -1,0 +1,407 @@
+# Spartan UI component architecture
+
+How we build, style, own, and reuse UI components across the AIC frontends.
+This is the reference for **where things live**, **how they're styled**, and the
+**decision rules** for turning a Spartan primitive into one of our own components.
+
+> Status: **decided & in progress (2026-07-01).** This supersedes the initial
+> "Tailwind v4 deferred" scaffold choice. See [Decision](#0-decision-summary).
+
+---
+
+## 0. Decision summary
+
+This is a **correctness-first POC**: it should demonstrate the _canonical_ way to
+build with Spartan NG, not a hand-rolled approximation that merely works. That
+principle forced one concrete decision:
+
+> **Migrate to Tailwind v4 and adopt the real Spartan 1.0 CLI workflow.**
+
+Why it's not optional: `@spartan-ng/brain@1.0.2` (current stable) declares
+`tailwindcss ">=4.0.0"` and `tw-animate-css` as **required peers**. On Tailwind v3
+the canonical Spartan toolchain simply cannot run. Staying on v3 is what produced
+every symptom we found (no CLI, a hand-written button missing its behaviour layer,
+a `tailwind-merge` version mismatch).
+
+The upgrade is clean: **Spartan 1.0.2 peers `@angular/core ">=21 <23"`, so it runs
+on our held Angular 21** — the Tailwind v4 move is fully **independent of the
+[Angular 22 hold](angular-22-upgrade.md)**.
+
+---
+
+## 1. The mental model: brain → helm → composite
+
+Spartan is a **two-layer** system, and we add a third layer of our own:
+
+| Layer                  | What it is                                                                                                                                                              | Who owns it                              | Where it lives                                                         |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| **brain** (`brn*`)     | Headless, accessible behaviour: ARIA, keyboard nav, focus management, disabled-state normalisation. Zero visual opinion.                                                | Spartan (npm, auto-updated)              | `@spartan-ng/brain/*`                                                  |
+| **helm** (`hlm*`)      | The styled skin: thin Angular directives/components that apply Tailwind classes (via CVA + `classes()`/`cn`) and attach the matching brain primitive. shadcn-flavoured. | **Us** — copied into the repo by the CLI | `libs/shared/ui`                                                       |
+| **composite** (`ui-*`) | _Our_ components: combine ≥1 primitive, add structure/slots, or encode an app-domain concept.                                                                           | **Us**                                   | `libs/shared/ui` (generic) or a `feature` lib / the app (app-specific) |
+
+Key facts that shape everything below:
+
+- **Helm is copy-in, not a dependency.** There is no `@spartan-ng/helm` npm
+  package and there never will be (maintainer confirmed). The CLI _generates the
+  source into our repo_ so we own and restyle every line — the shadcn philosophy.
+  Our `libs/shared/ui` **is** our helm layer.
+- **brain is a real dependency** we install and let Spartan maintain. It's where
+  the hard accessibility work lives — we never hand-roll it.
+
+### Why the current button is wrong
+
+The existing `hlm-button.directive.ts` was **hand-authored** (commit `5b05958`,
+"clean Spartan-style starter"), not CLI-generated. It skips brain entirely. That's
+not merely stylistic — its selector is `button[hlmBtn], a[hlmBtn]`, but it relies
+on `disabled:*` utilities, and **`disabled` isn't a real attribute on `<a>`**. So
+`<a hlmBtn disabled>` neither dims nor blocks clicks. Canonical helm wires
+`BrnButton` via `hostDirectives`, which normalises exactly this. The fix is to
+generate the button the canonical way.
+
+---
+
+## 2. Where things live (Nx library architecture)
+
+### One shared UI lib (flat), single barrel
+
+All helm + generic composites live in the **single** `libs/shared/ui` library
+(tags `scope:shared`, `type:ui`), exported through one barrel (`@aic/shared/ui`).
+We do **not** create a lib-per-component and we do **not** duplicate UI into apps.
+Both frontends consume it.
+
+> **Packaging decision (learned from the CLI's real output).** Spartan's CLI
+> `generateAs: "entrypoint"` does **not** add lightweight secondary entry points
+> to an existing lib — it scaffolds a **separate buildable ng-packagr library per
+> primitive** (e.g. `libs/shared/ui/button`, `libs/shared/ui/utils`, each with its
+> own `project.json`/`ng-package.json`). Pointed at our existing `libs/shared/ui`,
+> that **nests Nx projects inside another project** (an anti-pattern). So we keep
+> our single flat lib and place the CLI's (style-transformed) output into
+> `src/lib/<name>/`, wired through the barrel. The component **code is
+> byte-identical to the generator**; only the packaging differs. Revisit adopting
+> Spartan's per-lib layout if the library grows large enough to want per-component
+> build granularity.
+
+### `components.json` (repo root)
+
+The CLI is configured by a root `components.json` (analogous to shadcn's). We
+commit it explicitly so `style`/`importAlias` are fixed and codemods
+(`healthcheck`, `migrate-*`) read a stable alias:
+
+```jsonc
+{
+  "componentsPath": "libs/shared/ui",
+  "buildable": false,
+  "generateAs": "entrypoint",
+  "style": "vega", // component recipe flavour (see §4)
+  "importAlias": "@aic/shared/ui",
+}
+```
+
+> **Adding a component:** do **not** run `nx g @spartan-ng/cli:ui <name>`
+> directly against this repo — it nests buildable libs (see above). Instead
+> generate to a scratch path (or read the templates under
+> `node_modules/@spartan-ng/cli/src/generators/ui/libs/<name>`), copy the
+> transformed `hlm-*.ts` into `libs/shared/ui/src/lib/<name>/`, repoint its
+> `classes` import to `../utils/hlm`, add a per-folder `index.ts`, and export it
+> from the barrel. Diff the CLI templates on upgrade to pull upstream fixes (§7).
+
+### Module boundaries
+
+Enforced in ESLint via `@nx/enforce-module-boundaries`:
+
+- `type:ui` may depend on `type:ui` and `type:util` **only** — never on
+  `type:feature`, an app, or a `scope:client` / `scope:agent` lib.
+- The litmus for "does it belong in `shared/ui`?": no app models/services, no
+  HTTP/router/store injection, named after a **UI role** not a **business
+  concept**. `<ui-stat-card>` yes; `<checkout-summary>` no (that's a feature lib).
+
+### The Tailwind preset's fate
+
+`libs/shared/ui-tailwind-preset` was a Tailwind **v3 JS preset**
+(`Partial<Config>` mapping `hsl(var(--x))`). Tailwind v4 is **CSS-first** — the
+preset concept goes away. It's replaced by a shared **theme CSS** (`@theme` +
+token vars) that both apps `@import`. See §4.
+
+---
+
+## 3. Styling conventions
+
+- **Variants** are declared with **CVA** (`class-variance-authority`): a base
+  class string, a `variants` map, and `defaultVariants`. Export the CVA function
+  and its `VariantProps`-derived union types so other components can compose the
+  same variants.
+- **Class merging** uses the generated **`classes()`** helper (canonical Spartan
+  1.0) — an effect-based host-class manager that avoids the interference a raw
+  `[class]` host binding causes. `cn()` (`twMerge(clsx(...))`) remains available
+  for plain string merging.
+- **Override-by-class is sacred.** Every component exposes an overridable `class`
+  input and applies it **last** so a consumer's class wins:
+  `classes(() => [buttonVariants({ variant, size }), userClass()])`. Ordering
+  (base → variants → user) is the one rule that must never be reversed.
+- **`tailwind-merge`** must match the Tailwind major: **v3.x of the lib for
+  Tailwind v4** (what we'll be on). The current `^3.6.0` becomes correct after the
+  migration; on the old Tailwind v3 it was a latent mis-merge bug.
+- **Multi-part components** (card, dialog, field) use **per-part class strings**,
+  one directive/component per part (the shadcn/Spartan pattern) — **not**
+  `tailwind-variants` slots. Don't introduce a second styling paradigm.
+
+---
+
+## 4. Design tokens & theming (Tailwind v4)
+
+### The token tiers
+
+- **Semantic tokens** (`--primary`, `--background`, `--ring`, `--radius`, …) are
+  what components consume. Components reference **only** these — never raw palette
+  colours (`bg-blue-600`) — so a re-skin never touches component code.
+- **Primitive tokens** (raw scales like `blue-600`) are **not** hand-maintained in
+  app CSS. They arrive later via the [Style Dictionary pipeline](design-tokens-pipeline.md)
+  as a build tier. Keep app CSS semantic-only.
+
+### v4 wiring (replaces the JS preset)
+
+Tailwind v4 is configured in CSS. A shared theme file maps semantic names to CSS
+variables via `@theme`, and dark mode becomes a custom variant:
+
+```css
+/* shared theme (imported by both apps) */
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  /* …ring, muted, accent, destructive, card, popover… */
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+}
+```
+
+> **v4 gotcha — content scanning.** v4 auto-detects an app's own sources, but
+> classes that live in `libs/shared/ui` are outside the app and get purged unless
+> declared. Add `@source "<relative-path-to>/libs/shared/ui/src";` in each app's
+> CSS. This replaces the v3 `createGlobPatternsForDependencies` call.
+
+### Values: OKLCH
+
+Token **values** move to **OKLCH** (the Spartan/shadcn v4 default; perceptually
+uniform). Each app's CSS supplies `:root` (light) and `.dark` blocks:
+
+```css
+:root {
+  --primary: oklch(0.62 0.19 259);
+  --radius: 0.5rem; /* … */
+}
+.dark {
+  --primary: oklch(0.62 0.19 259); /* … */
+}
+```
+
+> Note the storage rule **inverts** from v3: v4 stores the full colour function in
+> the var and maps `--color-x: var(--x)`; v3 stored bare HSL channels and wrapped
+> with `hsl()` in the config. Don't copy v3 snippets.
+
+### Per-app branding & dark mode
+
+- **One shared base, per-app overrides.** A shared theme holds the structure +
+  defaults; each app overrides only its brand vars (`--primary`, `--ring`,
+  `--radius`, …). A third brand later = a new app CSS that imports the base and
+  sets ~5 vars.
+- **Dark mode** = a signals `ThemeService` toggling `.dark` on
+  `document.documentElement`, plus a **synchronous inline `<script>`** in
+  `index.html` that sets the class before first paint (a service alone flashes).
+
+---
+
+## 5. The decision rule (the core question)
+
+> "We want our buttons rounded, orange, with special spacing." Token change? New
+> variant? New component?
+
+Resolve it with three gates, in order of preference:
+
+**Gate 1 — Token change (default answer for "style X _everywhere_").**
+If it's a system-wide statement, edit the tokens, nothing else:
+
+```css
+:root {
+  --primary: oklch(0.7 0.19 40); /* orange */
+  --ring: oklch(0.7 0.19 40);
+  --radius: 1rem; /* more rounded everywhere */
+}
+```
+
+Every `bg-primary`, `ring-ring`, and `rounded-*` (incl. all of `buttonVariants`)
+inherits it. No TS changes. If only one app should change, edit only that app's
+CSS — that's why tokens are per-app.
+
+**Gate 2 — New CVA variant (a recurring, _named_ intent that coexists with the
+default).** e.g. a `cta`/`pill` button used in many places:
+
+```ts
+variant: {
+  default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+  cta: 'rounded-full bg-primary text-primary-foreground shadow hover:bg-primary/90',
+}
+// <button hlmBtn variant="cta">Get started</button>
+```
+
+**Gate 2b — One-off at a single call site:** just override inline, no abstraction:
+`<button hlmBtn class="rounded-full px-8">Buy now</button>`.
+
+**Gate 3 — New component.** Only when you're adding **structure** (icon + label +
+spinner slots), **composing multiple primitives**, or encoding **domain meaning**.
+Never create a component whose whole job is to hard-code a class string — that's
+the premature-abstraction trap.
+
+---
+
+## 6. When to promote to _our_ component (composite)
+
+A composite belongs in `libs/shared/ui` when it's **generic and structural**:
+
+```ts
+@Component({
+  selector: 'ui-form-actions',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { '[class]': 'classes()' },
+  template: `<ng-content />`,
+})
+export class UiFormActions {
+  readonly align = input<'start' | 'end' | 'between'>('end');
+  readonly userClass = input<string>('', { alias: 'class' });
+  protected readonly classes = computed(() =>
+    cn('flex items-center gap-2', ALIGN[this.align()], this.userClass()),
+  );
+}
+```
+
+Rules that keep composites clean:
+
+- **Project, don't wrap.** A composite **projects** `<button hlmBtn>` children via
+  `<ng-content>` rather than attaching `HlmButton` through `hostDirectives`. Two
+  `[class]`-owning directives on one host clobber each other (silent
+  last-writer-wins), and projection preserves override-by-class.
+- **Composition over prop-explosion.** When tempted to add a 4th boolean input,
+  add a named slot (`<ng-content select="[slot=…]">`) instead.
+- **`hostDirectives` is for behaviour**, i.e. attaching a **brain** directive to a
+  composite — not for re-hosting a styled helm directive.
+- **No app state in `shared/ui`.** A component that injects a domain store or is
+  named after a business concept (`checkout-*`) goes in a `type:feature` lib.
+- **Rule of three for cross-app reuse.** Duplicate until it hurts. Visual
+  similarity isn't reusability (colours already unify via tokens); only
+  _structural_ sameness justifies promotion. Extract on the 3rd real need.
+
+### Worked example: the form-field
+
+Our `HlmFormFieldComponent` is Signal-Forms-aware (auto-derives error state from
+the projected control). That's genuine domain value → it's a legitimate
+**composite** and stays. But it will be **rebuilt to compose the CLI-generated
+helm `input`/`label`/`error` primitives**, instead of the current hand-rolled
+ones. That's the promotion rule in practice: keep the smart wrapper, own the
+primitives canonically underneath.
+
+---
+
+## 7. Maintenance & updates
+
+Copied helm is **owned code** — there is no smart 3-way merge with upstream.
+
+- **To pull upstream fixes:** bump `@spartan-ng/brain` + `@spartan-ng/cli`
+  **together** (same version), run `nx g @spartan-ng/cli:healthcheck` (applies
+  codemods), then **diff** the CLI's templates against our copy and reapply
+  relevant changes by hand. Git is the merge tool.
+- **Never** run `nx g @spartan-ng/cli:migrate-helm-libraries` or re-run `:ui` over
+  a customised component — it **overwrites** local changes.
+- **Keep local edits small and documented** so the diff stays legible. Prefer
+  token/variant changes (which live outside the generated structure) over editing
+  generated internals.
+
+---
+
+## 8. Migration plan (phased)
+
+Executed as a **thin vertical slice first** (button), then breadth.
+
+**Phase 0 — Toolchain**
+
+- `@spartan-ng/brain` + `@spartan-ng/cli` `alpha.697 → 1.0.2` (pinned together).
+- Add peers: `tw-animate-css`, `luxon`, `@ng-icons/core`, `@ng-icons/lucide`,
+  `@tailwindcss/postcss`. Remove unused `@lucide/angular`.
+
+**Phase 1 — Tailwind v3 → v4**
+
+- **PostCSS config must be JSON**: `.postcssrc.json` with `@tailwindcss/postcss`.
+  Angular's `@angular/build` only reads `.postcssrc.json`/`postcss.config.json` —
+  a `postcss.config.js` is silently ignored and Tailwind never runs.
+- `styles.css` → `@import 'tailwindcss'` + `tw-animate-css`; `@theme`;
+  `@custom-variant dark`; `@source` for `libs/shared/ui`.
+- Convert `ui-tailwind-preset` (JS) → shared theme CSS; values → OKLCH.
+- Remove `tailwind.config.ts` JS preset usage.
+
+**Phase 2 — CLI + button**
+
+- Commit root `components.json`.
+- `nx g @spartan-ng/cli:ui button` → brain-wired `HlmButton` + generated `utils`.
+- Delete the hand-rolled directive; update the showcase; add specs (variant→class,
+  override-wins, `<a hlmBtn disabled>` now blocks).
+
+**Phase 3 — Form stack**
+
+- Generate helm `input`/`label`/`form-field` primitives via CLI.
+- Rebuild `HlmFormField` composite over them; migrate icon usage to `@ng-icons`.
+
+**Phase 4 — Tokens, branding, pipeline**
+
+- Update [design-tokens-pipeline.md](design-tokens-pipeline.md) to its v4 shape.
+- Prove the model with the "orange/rounded/spacing" brand as pure token overrides.
+- De-dupe the two `styles.css` into shared base + per-app overrides.
+
+**Phase 5 — Correctness scaffolding**
+
+- `@nx/enforce-module-boundaries` constraints.
+- Signals `ThemeService` + no-flash inline script + `<meta name="color-scheme">`.
+- Update [feature-overview.md](feature-overview.md).
+
+---
+
+## 9. Open decisions
+
+| Decision                           | Options                                             | Chosen                                    |
+| ---------------------------------- | --------------------------------------------------- | ----------------------------------------- |
+| Component recipe flavour (`style`) | `vega` / `nova` / `lyra` / `maia` / `mira` / `luma` | `vega` (swappable; preview on spartan.ng) |
+| Base colour theme (`init --theme`) | `neutral` / `stone` / `zinc` / `gray` / `slate`     | `slate` (rebrand per-app later)           |
+| Token value format                 | OKLCH / hsl()                                       | **OKLCH** (done)                          |
+| Library packaging                  | Spartan per-lib / single flat lib                   | **single flat `@aic/shared/ui`** (done)   |
+
+### Resolved: "Empty sub-selector" warning = Tailwind wasn't running
+
+An earlier build logged `N rules skipped … & -> Empty sub-selector`. The
+2026-07-01 audit root-caused it: `@angular/build` only reads
+`.postcssrc.json`/`postcss.config.json`, **never `postcss.config.js`** — so once
+the v3 `tailwind.config.ts` was deleted, Tailwind stopped running entirely and the
+apps shipped **uncompiled CSS with zero utilities**. The warning was the canary,
+not a benign artifact. **Fixed** by switching both apps to `.postcssrc.json`;
+verified `.bg-primary`/`.inline-flex` now emit, `@apply` fully resolves, and the
+warning is gone.
+
+---
+
+## 10. References
+
+Verified during research (workflow `wf_b3713cd2-69d`), primary sources:
+
+- Spartan: spartan.ng (installation, theming, dark-mode, CLI, components.json,
+  update-guide), `goetzrobin/spartan` GitHub, installed
+  `@spartan-ng/cli` generator templates & `@spartan-ng/brain@1.0.2` peers.
+- shadcn: ui.shadcn.com (theming, tailwind-v4).
+- Tailwind: tailwindcss.com (functions-and-directives, upgrade-guide),
+  `dcastil/tailwind-merge` (v3 release notes, configuration).
+- Nx: nx.dev (enforce-module-boundaries). Angular: angular.dev
+  (directive-composition-api, zoneless).

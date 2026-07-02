@@ -1,21 +1,19 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HlmButtonDirective } from '@aic/shared/ui';
+import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from './auth.service';
 
 @Component({
   selector: 'client-login-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, HlmButtonDirective],
+  imports: [FormsModule, RouterLink, HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-8">
       <header class="space-y-1">
         <h1 class="text-2xl font-semibold tracking-tight">Sign in</h1>
-        <p class="text-sm text-muted-foreground">
-          We'll send a 6-digit code to verify your email.
-        </p>
+        <p class="text-sm text-muted-foreground">We'll send a 6-digit code to verify your email.</p>
       </header>
 
       @if (step() === 'email') {
@@ -39,9 +37,10 @@ import { AuthService } from './auth.service';
       } @else {
         <form (submit)="onVerify($event)" class="space-y-3">
           <p class="text-sm text-muted-foreground">
-            Code sent to <span class="font-medium text-foreground">{{ email() }}</span>.
+            Code sent to <span class="font-medium text-foreground">{{ email() }}</span
+            >.
             @if (devOtp()) {
-              <span class="block text-xs text-amber-600">
+              <span class="block text-xs text-muted-foreground">
                 Dev OTP: <code class="font-mono">{{ devOtp() }}</code>
               </span>
             }
@@ -72,9 +71,7 @@ import { AuthService } from './auth.service';
       }
 
       <p class="text-center text-xs text-muted-foreground">
-        <a
-          routerLink="/signal-forms"
-          class="underline underline-offset-4 hover:text-foreground"
+        <a routerLink="/signal-forms" class="underline underline-offset-4 hover:text-foreground"
           >View the Signal Forms demo →</a
         >
       </p>

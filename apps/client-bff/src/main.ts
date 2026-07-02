@@ -13,7 +13,7 @@ async function start(): Promise<void> {
 
   await registerHealthRoutes(app);
   await registerSessionRoutes(app);
-  await registerAuthRoutes(app, env.DEV_FIXED_OTP);
+  await registerAuthRoutes(app, { exposeDevOtp: env.NODE_ENV !== 'production' });
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });

@@ -4,6 +4,9 @@
   "sourceRoot": "apps/client-bff/src",
   "projectType": "application",
   "targets": {
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.app.json"
+    },
     "build": {
       "executor": "@nx/esbuild:esbuild",
       "outputs": ["{options.outputPath}"],

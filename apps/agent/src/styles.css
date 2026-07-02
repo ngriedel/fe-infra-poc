@@ -1,81 +1,23 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+@import '../../../libs/shared/ui/src/theme.css';
 
-/*
- * Agent app design tokens — denser, slightly cooler palette to signal
- * "internal workbench" vs the consumer-facing client app.
- */
-@layer base {
-  :root {
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+/* v4 scans app sources automatically; the shared UI lib lives outside the app,
+   so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
+@source '../../../libs/shared/ui/src';
 
-    --muted: 210 16% 93%;
-    --muted-foreground: 215 16% 47%;
-
-    --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
-    --border: 214 16% 87%;
-    --input: 214 16% 87%;
-
-    --primary: 215 65% 35%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 16% 93%;
-    --secondary-foreground: 222 47% 11%;
-
-    --accent: 215 65% 35%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 72% 50%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 215 65% 35%;
-
-    --radius: 0.375rem;
-  }
-
-  .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --muted: 217 33% 14%;
-    --muted-foreground: 215 20% 65%;
-
-    --popover: 222 47% 6%;
-    --popover-foreground: 210 40% 98%;
-
-    --card: 222 47% 6%;
-    --card-foreground: 210 40% 98%;
-
-    --border: 217 33% 18%;
-    --input: 217 33% 18%;
-
-    --primary: 215 90% 65%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 33% 14%;
-    --secondary-foreground: 210 40% 98%;
-
-    --accent: 217 33% 14%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
-
-    --ring: 215 90% 65%;
-  }
-
-  * {
-    @apply border-border;
-  }
-
-  body {
-    @apply bg-background text-foreground antialiased;
-  }
+/* Agent brand: a distinct blue primary marks the internal workbench —
+   demonstrates per-app theming layered over the shared token base. */
+:root {
+  --primary: oklch(0.48 0.13 250);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --ring: oklch(0.48 0.13 250);
+}
+:root.dark {
+  --primary: oklch(0.7 0.12 250);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --ring: oklch(0.7 0.12 250);
 }

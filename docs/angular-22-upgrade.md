@@ -1,25 +1,38 @@
-# Angular 22 Upgrade — Holding (status: BLOCKED, decided 2026-06-05)
+# Angular 22 Upgrade — Holding on Nx (status: NEARLY READY, updated 2026-07-01)
 
-We are **staying on Angular 21.2** for now. Angular 22 released ~May 2026, but our
-toolchain/UI deps don't support it yet. Revisit when the green-light checklist below passes.
+We are **staying on Angular 21.2** for now. As of 2026-07-01 almost every blocker
+from the original hold has cleared. The **only hard gate left is Nx**: Angular 22
+support is in the **Nx 23.1 beta** (`23.1.0-beta.5`); **Nx 23.0.x stable still caps
+at Angular 21**. Plus a required **TypeScript 6** bump. Revisit when Nx 23.1 ships stable.
 
-## Why we're waiting (evidence as of 2026-06-05)
+## Status (evidence as of 2026-07-01)
 
-| Dependency | Needed for v22 | Status |
-|---|---|---|
-| **Nx (stable)** | Drives the Angular bump via `@nx/angular` migrations | ❌ Latest stable **22.7.5** tops out at Angular **21.2**. v22 support only in **Nx 23 pre-releases** (`23.0.0-canary.*`). |
-| **@spartan-ng/brain** | Our UI primitives | ❌ Latest `alpha.705` peer: `@angular/core ">=20 <22"`, `@angular/cdk "<22"`. Long pole — pre-1.0, gates on CDK 22. |
-| **jest-preset-angular** | Entire unit-test harness | ❌ Latest `16.1.5` peer: `@angular/core` & `@angular/compiler-cli ">=19 <22"`. |
-| @angular/cdk | — | ✅ 22.0.0 exists, but Spartan pins `<22`, so unusable until Spartan moves. |
+| Dependency              | Needed for v22                                       | Status                                                                                                                                                                                                                                                   |
+| ----------------------- | ---------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Nx**                  | Drives the Angular bump via `@nx/angular` migrations | ❌ **Only remaining blocker.** `nx@latest` = **23.0.1**, but `@nx/angular@23.0.1` peers `@angular/build ">= 19 < 22"` → caps at Angular 21. Angular 22 support is in `@nx/angular@23.1.0-beta.5` (`@angular/build ">= 20 < 23"`) — **beta, not stable.** |
+| **TypeScript**          | Angular 22 compiler                                  | ⚠️ **Bump required.** `@angular/compiler-cli@22.0.4` peers `typescript ">=6.0 <6.1"` — we're on **5.9.3**. Angular 22 needs **TS 6.0**.                                                                                                                  |
+| **@spartan-ng/brain**   | UI primitives                                        | ✅ **Cleared.** `1.0.2` peers `@angular/core ">=21 <23"`, `@angular/cdk ">=21 <23"`.                                                                                                                                                                     |
+| **jest-preset-angular** | Unit-test harness                                    | ✅ **Cleared.** `17.0.0` peers `@angular/core` & `@angular/compiler-cli ">=20 <23"`, `typescript ">=5.8"`.                                                                                                                                               |
+| **angular-eslint**      | Lint                                                 | ✅ **Cleared.** `22.0.0` (peers `@angular/cli ">=22 <23"`) — bump from our 21.2.                                                                                                                                                                         |
+| **@angular/cdk**        | Overlay/a11y                                         | ✅ `22.0.2` stable (Spartan now allows it).                                                                                                                                                                                                              |
+| **@maskito/angular**    | Input masks                                          | ✅ `5.3.1` peers `@angular/core ">=19"` (no upper cap).                                                                                                                                                                                                  |
 
-Also note: Angular 22 wants **TypeScript 6** (we're on 5.9) and Node 22+ (we're on 24 ✅).
+Node 24 ✅ (Angular 22 wants Node 22+).
 
-## Green-light checklist (all must pass)
+## Green-light checklist
 
-- [ ] **Nx 23 is stable** (`npm view nx version` is `23.x`, not a canary) and its
-      [Angular version matrix](https://nx.dev/docs/technologies/angular/guides/angular-nx-version-matrix) lists Angular 22.
-- [ ] **Spartan NG** publishes a release whose peer deps allow `@angular/core >=22` and `@angular/cdk >=22`.
-- [ ] **jest-preset-angular** lifts its `<22` cap on `@angular/core` / `@angular/compiler-cli`.
+- [ ] **Nx 23.1 is stable** — `npm view nx dist-tags` shows `latest: 23.1.x` (today
+      it's `23.0.1`, with `next: 23.1.0-beta.5`) **and** `@nx/angular@<that>` peers
+      allow `@angular/build >=22`. This is the last domino.
+- [ ] **Bump TypeScript to 6.0** — Angular 22's `@angular/compiler-cli` requires
+      `typescript ">=6.0 <6.1"`. Check `typescript-eslint` supports TS 6 at that point.
+- [x] **Spartan NG** allows `@angular/core >=22` / `@angular/cdk >=22` — done (`@spartan-ng/brain@1.0.2`).
+- [x] **jest-preset-angular** lifted its `<22` cap — done (`17.0.0`).
+- [x] **angular-eslint 22** available — done (`22.0.0`).
+
+> Willing to run Nx on the **beta channel** (`nx@next` / `@nx/angular@23.1.0-beta.x`)?
+> Then the upgrade is technically doable **now** — every other dep is ready and the
+> TS 6 bump is mechanical. Waiting for Nx 23.1 stable is the conservative call.
 
 ## Readiness check (re-run anytime)
 

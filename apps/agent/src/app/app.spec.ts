@@ -1,18 +1,21 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
-import { NxWelcome } from './nx-welcome';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [App, NxWelcome],
+      imports: [App],
+      providers: [provideRouter([])],
     }).compileComponents();
   });
 
-  it('should render title', async () => {
+  it('renders the app shell with the theme toggle and router outlet', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Welcome agent');
+    const el = fixture.nativeElement as HTMLElement;
+    expect(fixture.componentInstance).toBeTruthy();
+    expect(el.querySelector('ui-theme-toggle')).toBeTruthy();
+    expect(el.querySelector('router-outlet')).toBeTruthy();
   });
 });

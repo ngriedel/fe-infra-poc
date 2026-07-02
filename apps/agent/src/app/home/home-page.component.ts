@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HlmButtonDirective } from '@aic/shared/ui';
+import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '../auth/auth.service';
 
 @Component({
   selector: 'agent-home-page',
   standalone: true,
-  imports: [HlmButtonDirective],
+  imports: [HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-8">

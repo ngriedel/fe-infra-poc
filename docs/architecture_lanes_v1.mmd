@@ -1,0 +1,99 @@
+flowchart TB
+%% AIC POC — vertical product lanes (v1)
+%% One lane per product: FE -> BFF (session/auth/data) -> enterprise.
+%% Same info as architecture_runtime_v1, laid out as 3 parallel columns.
+
+  %% ===== shared, consumed by every lane (top) =====
+  subgraph SHARED["Shared (Nx monorepo) · GOVERNED — senior/lead review on core libs &amp; tokens"]
+    direction LR
+    FIGMA["Figma<br/>design tokens (source)"]
+    GHUB["GitHub<br/>token PR + review<br/>(Absa-wide tokens locked)"]
+    UI["shared/ui + ui-tailwind-preset<br/>Spartan · Tailwind · tokens"]
+    HDR["example: absa-header<br/>shared Angular component"]
+    CORE["bff/core<br/>headers · CORS · session · logging"]
+    CONTR["bff/contracts<br/>Zod: auth · errors · config"]
+    FIGMA -->|export| GHUB -->|tokens in code| UI -->|composed into| HDR
+  end
+
+  %% ===== LANE: Activate (public · OTP) =====
+  subgraph L_ACT["Activate · public"]
+    direction TB
+    ACT["apps/client (Angular)<br/>OTP / magic-link"]
+    ACTS["client-bff: session<br/>cookie ⇄ store"]
+    ACT_R[("Session store<br/>enterprise-standard<br/>(Postgres / Mongo)")]
+    ACTA["auth-otp<br/>send / verify code"]
+    ACTD["validate (Zod) +<br/>call enterprise APIs"]
+    ACT ==>|session cookie| ACTS
+    ACTS <--> ACT_R
+    ACTS --> ACTA --> ACTD
+  end
+
+  %% ===== LANE: JDJ (dealer/broker · OIDC) =====
+  subgraph L_JDJ["JDJ · dealer/broker (planned)"]
+    direction TB
+    JDJ["apps/jdj (Angular)<br/>OIDC user+password"]
+    JDJS["jdj-bff: session<br/>cookie ⇄ store"]
+    JDJ_R[("Session store<br/>enterprise-standard<br/>(Postgres / Mongo)")]
+    JDJA["auth-oidc<br/>token exchange"]
+    JDJD["validate (Zod) +<br/>call enterprise APIs"]
+    JDJ ==>|session cookie| JDJS
+    JDJS <--> JDJ_R
+    JDJS --> JDJA --> JDJD
+  end
+
+  %% ===== LANE: Agent (staff · SSO) =====
+  subgraph L_AGT["Agent · staff"]
+    direction TB
+    AGT["apps/agent (Angular)<br/>SSO"]
+    AGTS["agent-bff: session<br/>cookie ⇄ store"]
+    AGT_R[("Session store<br/>enterprise-standard<br/>(Postgres / Mongo)")]
+    AGTA["auth-sso<br/>SSO / OIDC"]
+    AGTD["validate (Zod) +<br/>call enterprise APIs"]
+    AGT ==>|session cookie| AGTS
+    AGTS <--> AGT_R
+    AGTS --> AGTA --> AGTD
+  end
+
+  %% ===== shared enterprise layer (bottom) =====
+  subgraph ENT["Enterprise layer"]
+    direction LR
+    IDP["Azure AD / Entra · OIDC"]
+    MAIL["Email / OTP delivery"]
+    API["Enterprise APIs"]
+  end
+
+  ACTA -->|verify OTP| MAIL
+  JDJA -->|token exchange| IDP
+  AGTA -->|token exchange| IDP
+  ACTD --> API
+  JDJD --> API
+  AGTD --> API
+
+  %% shared consumed by lanes (kept as aggregate dotted edges)
+  HDR   -.->|e.g. absa-header in every app| L_ACT
+  HDR   -.-> L_JDJ
+  HDR   -.-> L_AGT
+  UI    -.->|base components + tokens| L_ACT
+  UI    -.-> L_JDJ
+  UI    -.-> L_AGT
+  CORE  -.->|BFF baseline| L_ACT
+  CORE  -.-> L_JDJ
+  CORE  -.-> L_AGT
+  CONTR -.->|shared types| L_ACT
+  CONTR -.-> L_JDJ
+  CONTR -.-> L_AGT
+
+  %% ===== styling =====
+  classDef fe fill:#e3f0ff,stroke:#1565c0,color:#0a2540;
+  classDef bff fill:#e7f7ec,stroke:#2e7d32,color:#0a2e15;
+  classDef lib fill:#fff5e0,stroke:#ef6c00,color:#3a2300;
+  classDef ent fill:#f0e9ff,stroke:#5e35b1,color:#220a40;
+  classDef store fill:#fdecea,stroke:#c62828,color:#3a0a08;
+  classDef design fill:#fde7f3,stroke:#c2185b,color:#3a0a22;
+
+  class ACT,JDJ,AGT fe;
+  class ACTS,ACTA,ACTD,JDJS,JDJA,JDJD,AGTS,AGTA,AGTD bff;
+  class UI,HDR,CORE,CONTR lib;
+  class FIGMA,GHUB design;
+  class IDP,MAIL,API ent;
+  class ACT_R,JDJ_R,AGT_R store;

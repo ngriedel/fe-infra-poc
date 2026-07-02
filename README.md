@@ -2,20 +2,20 @@
 
 Nx monorepo with two Angular frontends and a Fastify BFF per frontend, demonstrating different auth mechanisms for different audiences sharing one type-safe contract layer.
 
-See [docs/architecture-decisions.md](docs/architecture-decisions.md) for the why behind every structural choice, and [docs/bff-latency.md](docs/bff-latency.md) for the latency reasoning.
+See [docs/architecture-decisions.md](docs/architecture-decisions.md) for the why behind every structural choice, [docs/bff-latency.md](docs/bff-latency.md) for the latency reasoning, and [docs/spartan-ui-architecture.md](docs/spartan-ui-architecture.md) for the UI component architecture (Spartan brain/helm, Tailwind v4, design tokens).
 
 ## Stack
 
-| Layer | Choice |
-|---|---|
-| Monorepo | Nx 22 + pnpm workspaces |
-| Frontends | Angular 21 (standalone, signals, esbuild) |
-| Backends | Fastify 5 (per-frontend BFF) |
-| UI | Spartan-style HlmButton + Tailwind 3 + Angular CDK |
-| Validation | Zod 4 (schemas shared via `@aic/bff/contracts`) |
-| Sessions | `@fastify/secure-session` (HttpOnly, SameSite=Lax, signed) |
-| Client auth | Magic link + 6-digit OTP (passwordless) |
-| Agent auth | OIDC against Azure AD (stubbed for local dev) |
+| Layer       | Choice                                                             |
+| ----------- | ------------------------------------------------------------------ |
+| Monorepo    | Nx 22 + pnpm workspaces                                            |
+| Frontends   | Angular 21 (standalone, signals, esbuild)                          |
+| Backends    | Fastify 5 (per-frontend BFF)                                       |
+| UI          | Spartan NG (brain + CLI-generated helm) + Tailwind 4 + Angular CDK |
+| Validation  | Zod 4 (schemas shared via `@aic/bff/contracts`)                    |
+| Sessions    | `@fastify/secure-session` (HttpOnly, SameSite=Lax, signed)         |
+| Client auth | Magic link + 6-digit OTP (passwordless)                            |
+| Agent auth  | OIDC against Azure AD (stubbed for local dev)                      |
 
 ## Prerequisites
 
@@ -41,12 +41,12 @@ pnpm dev
 
 That runs all four projects in parallel via `nx run-many -t serve`:
 
-| App | URL |
-|---|---|
+| App             | URL                     |
+| --------------- | ----------------------- |
 | Client frontend | <http://localhost:4200> |
-| Client BFF | <http://localhost:3001> |
-| Agent frontend | <http://localhost:4201> |
-| Agent BFF | <http://localhost:3002> |
+| Client BFF      | <http://localhost:3001> |
+| Agent frontend  | <http://localhost:4201> |
+| Agent BFF       | <http://localhost:3002> |
 
 Each Angular dev server proxies `/api/*` to its matching BFF (see `proxy.conf.json`), so the browser sees a single origin and HttpOnly session cookies just work.
 
@@ -72,7 +72,7 @@ Each Angular dev server proxies `/api/*` to its matching BFF (see `proxy.conf.js
 pnpm build         # build all projects
 pnpm test          # run all unit tests (Jest)
 pnpm lint          # lint all projects
-pnpm typecheck     # type-check all projects
+pnpm typecheck     # type-check the BFF + shared libs (Angular apps are type-checked by `build`)
 pnpm graph         # open the Nx project graph in your browser
 pnpm format        # write prettier formatting
 pnpm format:check  # CI-friendly format check
@@ -80,12 +80,17 @@ pnpm format:check  # CI-friendly format check
 # Run one project's target:
 nx serve client
 nx build agent-bff
+nx typecheck client-bff
 nx test ui
 nx e2e client-e2e
 
 # Affected-only (relative to main):
 nx affected -t build
 nx affected -t test
+
+# Suggested CI gate — Angular type safety comes from `build` (ngtsc, incl.
+# templates); the esbuild-built BFFs are covered by `typecheck`:
+nx affected -t lint test build typecheck
 ```
 
 ## Repo layout
@@ -100,8 +105,7 @@ apps/
   agent-e2e/           # Playwright e2e for agent
 libs/
   shared/
-    ui/                  # Spartan-style component lib (HlmButton + cn helper)
-    ui-tailwind-preset/  # shared Tailwind preset (HSL CSS-var design tokens)
+    ui/                  # Spartan helm components (brain-wired) + cn/classes utils
   bff/
     contracts/           # zod schemas + inferred TS types (shared FE+BE)
     core/                # Fastify factory + plugins + AppError + env loader
@@ -113,12 +117,11 @@ docs/
 
 ## Path aliases
 
-| Import path | Resolves to |
-|---|---|
-| `@aic/shared/ui` | UI components / directives |
-| `@aic/shared/ui-tailwind-preset` | Shared Tailwind config preset |
-| `@aic/bff/contracts` | Zod schemas + inferred types |
-| `@aic/bff/core` | Fastify factory, plugins, guards, env loader |
+| Import path          | Resolves to                                  |
+| -------------------- | -------------------------------------------- |
+| `@aic/shared/ui`     | Spartan helm components + cn/classes utils   |
+| `@aic/bff/contracts` | Zod schemas + inferred types                 |
+| `@aic/bff/core`      | Fastify factory, plugins, guards, env loader |
 
 ## How the BFFs serve workspace deps
 

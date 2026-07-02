@@ -39,7 +39,10 @@ export async function createBffServer(opts: CreateBffServerOptions) {
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
 
-  await app.register(securityPlugin, { corsOrigin: opts.frontendOrigin });
+  await app.register(securityPlugin, {
+    corsOrigin: opts.frontendOrigin,
+    nodeEnv: opts.nodeEnv,
+  });
   await app.register(secureSessionPlugin, {
     secret: opts.sessionSecret,
     secure: opts.nodeEnv === 'production',

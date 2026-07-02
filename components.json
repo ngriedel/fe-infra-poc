@@ -1,0 +1,7 @@
+{
+  "componentsPath": "libs/shared/ui",
+  "buildable": false,
+  "generateAs": "entrypoint",
+  "style": "vega",
+  "importAlias": "@aic/shared/ui"
+}

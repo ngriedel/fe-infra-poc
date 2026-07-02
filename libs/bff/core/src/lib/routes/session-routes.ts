@@ -18,8 +18,11 @@ export async function registerSessionRoutes(app: BffServer): Promise<void> {
     handler: async (req) => ({ user: req.user ?? null }),
   });
 
-  app.post('/api/auth/logout', async (req) => {
-    req.session.delete();
-    return { user: null };
+  app.post('/api/auth/logout', {
+    schema: { response: { 200: sessionResponseSchema } },
+    handler: async (req) => {
+      req.session.delete();
+      return { user: null };
+    },
   });
 }

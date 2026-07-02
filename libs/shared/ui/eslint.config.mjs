@@ -8,13 +8,14 @@ export default [
   {
     files: ['**/*.ts'],
     rules: {
-      // This lib follows the Spartan NG ("Helm") convention: `hlm` selector
-      // prefix and inputs deliberately aliased to `class` / the selector name.
+      // Two selector prefixes: `hlm` for Spartan helm primitives (copied/owned),
+      // `ui` for our own generic composites (theme toggle, etc.). Inputs are
+      // deliberately aliased to `class` / the selector name (Spartan convention).
       '@angular-eslint/directive-selector': [
         'error',
         {
           type: 'attribute',
-          prefix: 'hlm',
+          prefix: ['hlm', 'ui'],
           style: 'camelCase',
         },
       ],
@@ -22,12 +23,21 @@ export default [
         'error',
         {
           type: 'element',
-          prefix: 'hlm',
+          prefix: ['hlm', 'ui'],
           style: 'kebab-case',
         },
       ],
       // Spartan primitives intentionally alias inputs (e.g. `class`, `hlmBtn`).
       '@angular-eslint/no-input-rename': 'off',
+    },
+  },
+  {
+    // Spartan CLI-generated reactive class manager: the `manager!` non-null
+    // assertions are safe (manager is assigned before every closure runs).
+    // Keep verbatim so future CLI diffs stay clean.
+    files: ['**/lib/utils/hlm.ts'],
+    rules: {
+      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
   {

@@ -13,8 +13,15 @@ const baseEnvSchema = z.object({
     .regex(/^[0-9a-fA-F]{64}$/, 'SESSION_SECRET must be a 64-char hex string (32 bytes)'),
   /** Origin of the matching frontend, used by CORS. */
   FRONTEND_ORIGIN: z.string().url(),
-  /** When true, log pretty (dev). When false, log NDJSON (prod). */
-  LOG_PRETTY: z.coerce.boolean().default(true),
+  /**
+   * When true, log pretty (dev). When false, log NDJSON (prod).
+   * Parsed as an explicit string enum — `z.coerce.boolean()` would turn the
+   * string "false" into `true` (JS Boolean semantics), shipping pretty logs to prod.
+   */
+  LOG_PRETTY: z
+    .enum(['true', 'false'])
+    .default('true')
+    .transform((v) => v === 'true'),
 });
 
 export type BaseEnv = z.infer<typeof baseEnvSchema>;

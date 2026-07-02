@@ -1,0 +1,74 @@
+flowchart TB
+%% AIC POC — whole-system architecture (vertical / portrait)
+%% solid = runtime flow · dotted = consumes shared code · thick = CI/CD deploy
+
+  %% ---- Design source ----
+  FIGMA["Figma<br/>design tokens"]
+  GH["GitHub<br/>tokens via PR"]
+  FIGMA --> GH
+
+  %% ---- Shared design system ----
+  TOK["shared/ui-tailwind-preset<br/>design tokens"]
+  UI["shared/ui<br/>Spartan + Tailwind<br/>button · form-field"]
+  GH -.-> TOK
+  TOK --> UI
+
+  %% ---- Frontends (Angular, zoneless, signals) ----
+  subgraph FE["Frontends · Angular zoneless · Signal Forms"]
+    ACT["Activate<br/>apps/client<br/>public · OTP"]
+    JDJ["JDJ<br/>apps/jdj (planned)<br/>dealer · OIDC"]
+    AGT["Agent<br/>apps/agent<br/>staff · SSO"]
+  end
+  UI -.->|used by all FE| FE
+
+  %% ---- BFFs (Fastify, one per FE) ----
+  subgraph BFF["Backends-for-Frontend · Fastify · http-only session cookie"]
+    ACTB["client-bff"]
+    JDJB["jdj-bff (planned)"]
+    AGTB["agent-bff"]
+  end
+  ACT --> ACTB
+  JDJ --> JDJB
+  AGT --> AGTB
+
+  %% ---- Shared BFF libs ----
+  subgraph BLIB["Shared BFF libs"]
+    CORE["bff/core<br/>headers · CORS · sessions<br/>errors · logging"]
+    CONTR["bff/contracts<br/>Zod: auth · errors · config"]
+    AUTH["bff/auth-sso · auth-oidc · auth-otp"]
+  end
+  BFF -.->|built on| BLIB
+  CONTR -.->|shared FE⇄BFF types| FE
+
+  %% ---- Enterprise layer ----
+  subgraph ENT["Enterprise layer"]
+    IDP["Azure AD / Entra<br/>OIDC"]
+    MAIL["Email / OTP delivery"]
+    API["Enterprise APIs"]
+  end
+  ACTB --> MAIL
+  AGTB --> IDP
+  JDJB --> IDP
+  BFF --> API
+
+  %% ---- CI/CD spine ----
+  NX["Nx monorepo<br/>pnpm · TS end-to-end"]
+  CI["CI · nx affected<br/>lint · test · build · contracts"]
+  GOCD["GoCD pipelines<br/>per-app, incremental"]
+  CONT["Per-app containers (×6)<br/>client · jdj · agent + BFFs"]
+  NX ==> CI ==> GOCD ==> CONT
+
+  %% ---- styling ----
+  classDef design fill:#fde7f3,stroke:#c2185b,color:#3a0a22;
+  classDef fe fill:#e3f0ff,stroke:#1565c0,color:#0a2540;
+  classDef bff fill:#e7f7ec,stroke:#2e7d32,color:#0a2e15;
+  classDef lib fill:#fff5e0,stroke:#ef6c00,color:#3a2300;
+  classDef ent fill:#f0e9ff,stroke:#5e35b1,color:#220a40;
+  classDef cicd fill:#ececec,stroke:#546e7a,color:#1a2227;
+
+  class FIGMA,GH design;
+  class ACT,JDJ,AGT fe;
+  class ACTB,JDJB,AGTB bff;
+  class TOK,UI,CORE,CONTR,AUTH lib;
+  class IDP,MAIL,API ent;
+  class NX,CI,GOCD,CONT cicd;

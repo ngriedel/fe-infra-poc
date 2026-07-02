@@ -8,13 +8,18 @@ import {
 import { badRequest, type BffServer, requireSession, unauthenticated } from '@aic/bff/core';
 import { ChallengeStore } from './challenge-store';
 
-export async function registerAuthRoutes(app: BffServer, devFixedOtp: string): Promise<void> {
+export interface AuthRoutesOptions {
+  /** Return the generated OTP in the response so the dev UI can auto-fill it. Must be false in prod. */
+  exposeDevOtp: boolean;
+}
+
+export async function registerAuthRoutes(app: BffServer, opts: AuthRoutesOptions): Promise<void> {
   const challenges = new ChallengeStore();
 
   /**
-   * Issue a magic-link challenge. In dev, the response includes the OTP
-   * so the frontend can auto-fill it. In production, the OTP is sent via
-   * email and the response only contains the challengeId + expiry.
+   * Issue a magic-link challenge. In dev the response includes the OTP so the
+   * frontend can auto-fill it; in production the OTP is delivered out-of-band
+   * (email) and the response carries only the challengeId + expiry.
    */
   app.post('/api/auth/request', {
     schema: {
@@ -23,12 +28,13 @@ export async function registerAuthRoutes(app: BffServer, devFixedOtp: string): P
     },
     handler: async (req) => {
       const { email } = req.body;
-      const challenge = challenges.create(email, devFixedOtp);
-      req.log.info({ email, challengeId: challenge.id }, 'Issued magic link');
+      const challenge = challenges.create(email);
+      // TODO(prod): deliver `challenge.otp` to `email` via the mailer.
+      req.log.info({ challengeId: challenge.id }, 'Issued magic link');
       return {
         challengeId: challenge.id,
         expiresAt: new Date(challenge.expiresAt).toISOString(),
-        devOtp: devFixedOtp,
+        ...(opts.exposeDevOtp ? { devOtp: challenge.otp } : {}),
       };
     },
   });
@@ -43,11 +49,11 @@ export async function registerAuthRoutes(app: BffServer, devFixedOtp: string): P
       const { challengeId, code } = req.body;
       const result = challenges.verify(challengeId, code);
       if ('error' in result) {
-        const code =
+        const errorCode =
           result.error === 'NOT_FOUND' || result.error === 'EXPIRED'
             ? 'EXPIRED_CHALLENGE'
             : 'INVALID_OTP';
-        throw badRequest(code, 'Magic-link verification failed');
+        throw badRequest(errorCode, 'Magic-link verification failed');
       }
       const user: SessionUser = {
         id: `client-${result.email}`,

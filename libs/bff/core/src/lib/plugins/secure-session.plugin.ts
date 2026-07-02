@@ -1,6 +1,5 @@
 import fp from 'fastify-plugin';
 import secureSession from '@fastify/secure-session';
-import cookie from '@fastify/cookie';
 import '../session';
 
 export interface SecureSessionPluginOptions {
@@ -13,7 +12,11 @@ export interface SecureSessionPluginOptions {
 }
 
 export const secureSessionPlugin = fp(async (app, opts: SecureSessionPluginOptions) => {
-  await app.register(cookie);
+  // Do NOT register @fastify/cookie here. @fastify/secure-session registers it
+  // internally WITH a signing secret (derived from the session key). Registering
+  // it ourselves first — without a secret — suppresses that, which throws for
+  // `reply.setCookie({ signed: true })` / `req.unsignCookie` and leaves the SSO
+  // state cookie unsigned (defeating its CSRF role).
   await app.register(secureSession, {
     sessionName: 'session',
     cookieName: opts.cookieName ?? 'sid',

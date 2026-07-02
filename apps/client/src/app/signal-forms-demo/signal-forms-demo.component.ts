@@ -15,7 +15,7 @@ import {
 } from '@angular/forms/signals';
 import { MaskitoDirective } from '@maskito/angular';
 import {
-  HlmButtonDirective,
+  HlmButton,
   HlmErrorComponent,
   HlmFormFieldComponent,
   HlmInputDirective,
@@ -70,7 +70,7 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
     JsonPipe,
     RouterLink,
     MaskitoDirective,
-    HlmButtonDirective,
+    HlmButton,
     HlmFormFieldComponent,
     HlmInputDirective,
     HlmLabelDirective,
@@ -170,10 +170,9 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
         <!-- Live model preview: proves the two-way binding -->
         <section class="space-y-1">
           <h2 class="text-sm font-medium text-muted-foreground">Live model</h2>
-          <pre
-            class="overflow-x-auto rounded-md border border-border bg-muted/40 p-3 text-xs"
-            >{{ model() | json }}</pre
-          >
+          <pre class="overflow-x-auto rounded-md border border-border bg-muted/40 p-3 text-xs">{{
+            model() | json
+          }}</pre>
           <p class="text-xs text-muted-foreground">
             Form valid: <span class="font-medium">{{ profileForm().valid() }}</span>
           </p>

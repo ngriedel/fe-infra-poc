@@ -6,6 +6,9 @@ import { registerHealthRoutes } from './routes/health';
 function buildProvider(bffOrigin: string): OidcProvider {
   switch (env.OIDC_MODE) {
     case 'stub':
+      if (env.NODE_ENV === 'production') {
+        throw new Error('OIDC_MODE=stub is not allowed in production — set OIDC_MODE=azure');
+      }
       return new StubOidcProvider(bffOrigin);
     case 'azure':
       throw new Error(
