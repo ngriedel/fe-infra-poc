@@ -4,7 +4,7 @@ import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
 
 @Component({
-  selector: 'agent-home-page',
+  selector: 'dealer-home-page',
   standalone: true,
   imports: [HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -12,7 +12,7 @@ import { AuthService } from '@aic/shared/auth';
     <main class="container mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-8">
       <header class="flex items-end justify-between">
         <div class="space-y-1">
-          <p class="text-sm text-muted-foreground">Workbench</p>
+          <p class="text-sm text-muted-foreground">Dealer portal</p>
           <h1 class="text-2xl font-semibold tracking-tight">{{ auth.user()?.displayName }}</h1>
           <p class="text-xs text-muted-foreground">
             {{ auth.user()?.email }} · roles: {{ auth.user()?.roles?.join(', ') }}
@@ -37,9 +37,9 @@ export class HomePage {
   private readonly router = inject(Router);
 
   protected readonly cards = [
-    { title: 'Claims queue', body: 'Placeholder for the active claims list.' },
-    { title: 'Policies', body: 'Search and manage customer policies.' },
-    { title: 'Risk alerts', body: 'Cases flagged for review.' },
+    { title: 'Stock', body: 'Placeholder for the dealer vehicle inventory.' },
+    { title: 'Finance applications', body: 'Submit and track customer finance deals.' },
+    { title: 'Payouts', body: 'Settlement and payout status.' },
   ];
 
   async logout() {

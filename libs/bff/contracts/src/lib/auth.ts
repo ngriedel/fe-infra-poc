@@ -4,7 +4,7 @@ export const sessionUserSchema = z.object({
   id: z.string().min(1),
   email: z.email(),
   displayName: z.string().min(1),
-  audience: z.enum(['client', 'agent']),
+  audience: z.enum(['client', 'agent', 'dealer', 'broker']),
   roles: z.array(z.string()).default([]),
 });
 export type SessionUser = z.infer<typeof sessionUserSchema>;

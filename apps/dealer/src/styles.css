@@ -1,0 +1,23 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+@import '../../../libs/shared/ui/src/theme.css';
+
+/* v4 scans app sources automatically; the shared UI lib lives outside the app,
+   so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
+@source '../../../libs/shared/ui/src';
+
+/* Dealer brand: a distinct teal primary marks the dealer portal —
+   demonstrates per-app theming layered over the shared token base. */
+:root {
+  --primary: oklch(0.52 0.11 175);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --ring: oklch(0.52 0.11 175);
+}
+:root.dark {
+  --primary: oklch(0.72 0.1 175);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --ring: oklch(0.72 0.1 175);
+}

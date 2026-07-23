@@ -1,0 +1,27 @@
+import { loadEnv } from '@aic/bff/core';
+import { z } from 'zod';
+
+const rawEnv = loadEnv({
+  OIDC_MODE: z.enum(['stub', 'azure']).default('stub'),
+  /** Required when OIDC_MODE=azure. Ignored otherwise. */
+  AZURE_TENANT_ID: z.string().optional(),
+  AZURE_CLIENT_ID: z.string().optional(),
+  AZURE_CLIENT_SECRET: z.string().optional(),
+  AZURE_REDIRECT_URI: z.string().url().optional(),
+  /** Where to send the user after a successful login if no returnTo. */
+  POST_LOGIN_DEFAULT: z.string().default('/'),
+});
+
+if (rawEnv.OIDC_MODE === 'azure') {
+  const missing = (
+    ['AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'AZURE_REDIRECT_URI'] as const
+  ).filter((k) => !rawEnv[k]);
+  if (missing.length) {
+    throw new Error(
+      `OIDC_MODE=azure but missing required env vars: ${missing.join(', ')}`,
+    );
+  }
+}
+
+export const env = rawEnv;
+export type Env = typeof env;

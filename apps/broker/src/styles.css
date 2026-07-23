@@ -1,0 +1,23 @@
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import 'tailwindcss/utilities.css';
+@import '@spartan-ng/brain/hlm-tailwind-preset.css';
+@import '../../../libs/shared/ui/src/theme.css';
+
+/* v4 scans app sources automatically; the shared UI lib lives outside the app,
+   so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
+@source '../../../libs/shared/ui/src';
+
+/* Broker brand: a distinct violet primary marks the broker portal —
+   demonstrates per-app theming layered over the shared token base. */
+:root {
+  --primary: oklch(0.5 0.16 300);
+  --primary-foreground: oklch(0.984 0.003 247.858);
+  --ring: oklch(0.5 0.16 300);
+}
+:root.dark {
+  --primary: oklch(0.7 0.14 300);
+  --primary-foreground: oklch(0.208 0.042 265.755);
+  --ring: oklch(0.7 0.14 300);
+}

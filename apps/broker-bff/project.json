@@ -1,0 +1,88 @@
+{
+  "name": "broker-bff",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/broker-bff/src",
+  "projectType": "application",
+  "targets": {
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.app.json"
+    },
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/broker-bff",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "apps/broker-bff/src/main.ts",
+        "tsConfig": "apps/broker-bff/tsconfig.app.json",
+        "assets": ["apps/broker-bff/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/broker-bff/package.json",
+        "{workspaceRoot}/dist/apps/broker-bff/pnpm-lock.yaml"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/apps/broker-bff/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "broker-bff:build",
+        "runBuildTargetDependencies": false,
+        "runtimeArgs": ["--env-file=apps/broker-bff/.env"]
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "broker-bff:build:development"
+        },
+        "production": {
+          "buildTarget": "broker-bff:build:production"
+        }
+      }
+    }
+  },
+  "tags": ["scope:broker", "type:bff"]
+}

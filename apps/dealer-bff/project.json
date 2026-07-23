@@ -1,0 +1,88 @@
+{
+  "name": "dealer-bff",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/dealer-bff/src",
+  "projectType": "application",
+  "targets": {
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.app.json"
+    },
+    "build": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
+      "options": {
+        "platform": "node",
+        "outputPath": "dist/apps/dealer-bff",
+        "format": ["cjs"],
+        "bundle": false,
+        "main": "apps/dealer-bff/src/main.ts",
+        "tsConfig": "apps/dealer-bff/tsconfig.app.json",
+        "assets": ["apps/dealer-bff/src/assets"],
+        "generatePackageJson": true,
+        "esbuildOptions": {
+          "sourcemap": true,
+          "outExtension": {
+            ".js": ".js"
+          }
+        }
+      },
+      "configurations": {
+        "development": {},
+        "production": {
+          "esbuildOptions": {
+            "sourcemap": false,
+            "outExtension": {
+              ".js": ".js"
+            }
+          }
+        }
+      }
+    },
+    "prune-lockfile": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "executor": "@nx/js:prune-lockfile",
+      "outputs": [
+        "{workspaceRoot}/dist/apps/dealer-bff/package.json",
+        "{workspaceRoot}/dist/apps/dealer-bff/pnpm-lock.yaml"
+      ],
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "copy-workspace-modules": {
+      "dependsOn": ["build"],
+      "cache": true,
+      "outputs": ["{workspaceRoot}/dist/apps/dealer-bff/workspace_modules"],
+      "executor": "@nx/js:copy-workspace-modules",
+      "options": {
+        "buildTarget": "build"
+      }
+    },
+    "prune": {
+      "dependsOn": ["prune-lockfile", "copy-workspace-modules"],
+      "executor": "nx:noop"
+    },
+    "serve": {
+      "continuous": true,
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
+      "dependsOn": ["build"],
+      "options": {
+        "buildTarget": "dealer-bff:build",
+        "runBuildTargetDependencies": false,
+        "runtimeArgs": ["--env-file=apps/dealer-bff/.env"]
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "dealer-bff:build:development"
+        },
+        "production": {
+          "buildTarget": "dealer-bff:build:production"
+        }
+      }
+    }
+  },
+  "tags": ["scope:dealer", "type:bff"]
+}

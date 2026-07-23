@@ -25,7 +25,7 @@ export class AuthService {
     }
   }
 
-  /** Full-page redirect to the BFF login (which redirects to Azure AD / stub IdP). */
+  /** Full-page redirect to the BFF login (which redirects to the IdP / stub). */
   beginLogin(returnTo = '/'): void {
     const q = new URLSearchParams({ returnTo });
     window.location.assign(`/api/auth/login?${q.toString()}`);

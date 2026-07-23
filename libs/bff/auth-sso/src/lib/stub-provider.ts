@@ -3,16 +3,33 @@ import type { SessionUser } from '@aic/bff/contracts';
 import { badRequest } from '@aic/bff/core';
 import type { OidcProvider } from './oidc-provider';
 
+/** The canned identity returned when no overrides are supplied (agent BFF). */
+const DEFAULT_STUB_USER: SessionUser = {
+  id: 'stub-agent-1',
+  email: 'agent.stub@aic.local',
+  displayName: 'Stub Agent',
+  audience: 'agent',
+  roles: ['agent', 'claims:read', 'claims:write'],
+};
+
 /**
  * Stub OIDC provider — bypasses any real IdP. The "authorize" step
  * redirects the browser straight back to the BFF's callback with a
- * canned code, and the "callback" step returns a fixed agent user.
+ * canned code, and the "callback" step returns a fixed user.
  *
- * Swap for `AzureOidcProvider` (real `openid-client` flow) when an Entra
- * tenant + app registration is available.
+ * Pass `overrides` to mint a per-app stub identity (e.g. a dealer/broker
+ * audience). Swap the whole thing for `EntraOidcProvider` (real
+ * `openid-client` flow) when an Entra tenant + app registration is available.
  */
 export class StubOidcProvider implements OidcProvider {
-  constructor(private readonly bffOrigin: string) {}
+  private readonly user: SessionUser;
+
+  constructor(
+    private readonly bffOrigin: string,
+    overrides: Partial<SessionUser> = {},
+  ) {
+    this.user = { ...DEFAULT_STUB_USER, ...overrides };
+  }
 
   async authorize(_returnTo: string) {
     const state = randomUUID();
@@ -33,12 +50,6 @@ export class StubOidcProvider implements OidcProvider {
     if (state !== expectedState) {
       throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state did not match');
     }
-    return {
-      id: 'stub-agent-1',
-      email: 'agent.stub@aic.local',
-      displayName: 'Stub Agent',
-      audience: 'agent',
-      roles: ['agent', 'claims:read', 'claims:write'],
-    };
+    return this.user;
   }
 }

@@ -22,9 +22,14 @@ export default [
               onlyDependOnLibsWithTags: ['scope:client', 'scope:shared'],
             },
             { sourceTag: 'scope:agent', onlyDependOnLibsWithTags: ['scope:agent', 'scope:shared'] },
+            { sourceTag: 'scope:dealer', onlyDependOnLibsWithTags: ['scope:dealer', 'scope:shared'] },
+            { sourceTag: 'scope:broker', onlyDependOnLibsWithTags: ['scope:broker', 'scope:shared'] },
             { sourceTag: 'scope:shared', onlyDependOnLibsWithTags: ['scope:shared'] },
             // Type layering: what each kind of project may consume.
-            { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:ui', 'type:contracts'] },
+            {
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: ['type:ui', 'type:auth', 'type:contracts'],
+            },
             {
               sourceTag: 'type:bff',
               onlyDependOnLibsWithTags: ['type:bff-core', 'type:bff-auth', 'type:contracts'],
@@ -34,6 +39,8 @@ export default [
               onlyDependOnLibsWithTags: ['type:bff-core', 'type:contracts'],
             },
             { sourceTag: 'type:bff-core', onlyDependOnLibsWithTags: ['type:contracts'] },
+            // Shared frontend auth: wraps the session contract for the OIDC apps.
+            { sourceTag: 'type:auth', onlyDependOnLibsWithTags: ['type:contracts'] },
             // Leaves: may not depend on any other workspace lib.
             { sourceTag: 'type:contracts', onlyDependOnLibsWithTags: [] },
             { sourceTag: 'type:ui', onlyDependOnLibsWithTags: [] },
