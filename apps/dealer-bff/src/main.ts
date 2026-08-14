@@ -29,6 +29,7 @@ async function start(): Promise<void> {
     sessionSecret: env.SESSION_SECRET,
     frontendOrigin: env.FRONTEND_ORIGIN,
     logPretty: env.LOG_PRETTY,
+    audience: 'dealer',
   });
 
   const bffOrigin = `http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`;

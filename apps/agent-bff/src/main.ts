@@ -1,5 +1,10 @@
 import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
-import { registerSsoAuthRoutes, StubOidcProvider, type OidcProvider } from '@aic/bff/auth-sso';
+import {
+  registerSsoAuthRoutes,
+  StubOidcProvider,
+  EntraOidcProvider,
+  type OidcProvider,
+} from '@aic/bff/auth-sso';
 import { env } from './env';
 import { registerHealthRoutes } from './routes/health';
 
@@ -10,10 +15,22 @@ function buildProvider(bffOrigin: string): OidcProvider {
         throw new Error('OIDC_MODE=stub is not allowed in production — set OIDC_MODE=azure');
       }
       return new StubOidcProvider(bffOrigin);
-    case 'azure':
-      throw new Error(
-        'Azure OIDC provider not yet implemented — wire openid-client + AZURE_* env vars',
-      );
+    case 'azure': {
+      const { AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_REDIRECT_URI } = env;
+      if (!AZURE_TENANT_ID || !AZURE_CLIENT_ID || !AZURE_CLIENT_SECRET || !AZURE_REDIRECT_URI) {
+        throw new Error(
+          'OIDC_MODE=azure requires AZURE_TENANT_ID, AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_REDIRECT_URI',
+        );
+      }
+      return new EntraOidcProvider({
+        authority:
+          env.AZURE_AUTHORITY ?? `https://login.microsoftonline.com/${AZURE_TENANT_ID}/v2.0`,
+        clientId: AZURE_CLIENT_ID,
+        clientSecret: AZURE_CLIENT_SECRET,
+        redirectUri: AZURE_REDIRECT_URI,
+        audience: 'agent',
+      });
+    }
   }
 }
 
@@ -23,6 +40,7 @@ async function start(): Promise<void> {
     sessionSecret: env.SESSION_SECRET,
     frontendOrigin: env.FRONTEND_ORIGIN,
     logPretty: env.LOG_PRETTY,
+    audience: 'agent',
   });
 
   const bffOrigin = `http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`;

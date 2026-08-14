@@ -32,8 +32,8 @@ export async function registerSsoAuthRoutes(
     schema: { querystring: oidcLoginQuerySchema },
     handler: async (req, reply) => {
       const { returnTo } = req.query; // sanitized to a safe same-origin path by the schema
-      const { redirectUrl, state } = await opts.provider.authorize(returnTo);
-      reply.setCookie(STATE_COOKIE, JSON.stringify({ state, returnTo }), {
+      const { redirectUrl, state, nonce, codeVerifier } = await opts.provider.authorize(returnTo);
+      reply.setCookie(STATE_COOKIE, JSON.stringify({ state, nonce, codeVerifier, returnTo }), {
         httpOnly: true,
         sameSite: 'lax',
         path: '/',
@@ -57,15 +57,24 @@ export async function registerSsoAuthRoutes(
       if (!unsigned.valid || !unsigned.value) {
         throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state cookie tampered with');
       }
-      const { state: expectedState, returnTo } = JSON.parse(unsigned.value) as {
+      const { state: expectedState, nonce, codeVerifier, returnTo } = JSON.parse(unsigned.value) as {
         state: string;
+        nonce: string;
+        codeVerifier: string;
         returnTo: string;
       };
+
+      // Defense in depth: enforce state centrally, not only inside the provider.
+      if (req.query.state !== expectedState) {
+        throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state did not match');
+      }
 
       const user = await opts.provider.callback({
         code: req.query.code,
         state: req.query.state,
         expectedState,
+        nonce,
+        codeVerifier,
       });
 
       req.session.set('user', user);

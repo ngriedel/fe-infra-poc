@@ -8,7 +8,10 @@ import { unauthenticated } from '../errors';
  */
 export async function requireSession(req: FastifyRequest, _reply: FastifyReply): Promise<void> {
   const user = req.session.get('user') as SessionUser | undefined;
-  if (!user) throw unauthenticated();
+  // Reject a missing session, and — critically — a session minted for a
+  // different BFF/audience: a foreign cookie must never be honoured as this
+  // BFF's user (cross-audience privilege escalation).
+  if (!user || user.audience !== req.server.expectedAudience) throw unauthenticated();
   req.user = user;
 }
 

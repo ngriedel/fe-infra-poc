@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { SessionUser } from '@aic/bff/contracts';
 import { badRequest } from '@aic/bff/core';
-import type { OidcProvider } from './oidc-provider';
+import type { OidcAuthorizeResult, OidcCallbackParams, OidcProvider } from './oidc-provider';
 
 /** The canned identity returned when no overrides are supplied (agent BFF). */
 const DEFAULT_STUB_USER: SessionUser = {
@@ -31,22 +31,15 @@ export class StubOidcProvider implements OidcProvider {
     this.user = { ...DEFAULT_STUB_USER, ...overrides };
   }
 
-  async authorize(_returnTo: string) {
+  async authorize(_returnTo: string): Promise<OidcAuthorizeResult> {
     const state = randomUUID();
     const callback = new URL('/api/auth/callback', this.bffOrigin);
     callback.searchParams.set('code', 'stub-code');
     callback.searchParams.set('state', state);
-    return { redirectUrl: callback.toString(), state };
+    return { redirectUrl: callback.toString(), state, nonce: randomUUID(), codeVerifier: 'stub' };
   }
 
-  async callback({
-    state,
-    expectedState,
-  }: {
-    code: string;
-    state: string;
-    expectedState: string;
-  }): Promise<SessionUser> {
+  async callback({ state, expectedState }: OidcCallbackParams): Promise<SessionUser> {
     if (state !== expectedState) {
       throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state did not match');
     }
