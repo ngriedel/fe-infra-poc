@@ -57,3 +57,4 @@ test-results/
 .parcel-cache/
 
 .angular
+esl-stub/target/

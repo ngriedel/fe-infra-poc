@@ -22,6 +22,8 @@ const baseEnvSchema = z.object({
     .enum(['true', 'false'])
     .default('true')
     .transform((v) => v === 'true'),
+  /** Redis connection URL for the server-side session store (ioredis). */
+  REDIS_URL: z.string().default('redis://localhost:6379'),
 });
 
 export type BaseEnv = z.infer<typeof baseEnvSchema>;

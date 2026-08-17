@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
+import { catchError, map, of } from 'rxjs';
 import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
+import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
 
 @Component({
   selector: 'agent-home-page',
@@ -21,13 +25,38 @@ import { AuthService } from '@aic/shared/auth';
         <button hlmBtn size="sm" variant="outline" (click)="logout()">Sign out</button>
       </header>
 
-      <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @for (card of cards; track card.title) {
-          <article class="rounded-md border border-border bg-card p-4 text-card-foreground">
-            <h3 class="text-sm font-medium">{{ card.title }}</h3>
-            <p class="mt-1 text-xs text-muted-foreground">{{ card.body }}</p>
-          </article>
-        }
+      <section class="space-y-3">
+        <h2 class="text-sm font-medium text-muted-foreground">
+          Your policies <span class="text-xs">(live from the ESL, scoped to your identity)</span>
+        </h2>
+        <div class="overflow-hidden rounded-md border border-border">
+          <table class="w-full text-sm">
+            <thead class="bg-muted text-muted-foreground">
+              <tr>
+                <th class="px-3 py-2 text-left font-medium">Policy</th>
+                <th class="px-3 py-2 text-left font-medium">Product</th>
+                <th class="px-3 py-2 text-left font-medium">Status</th>
+                <th class="px-3 py-2 text-right font-medium">Monthly</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of policies(); track p.id) {
+                <tr class="border-t border-border">
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.id }}</td>
+                  <td class="px-3 py-2">{{ p.product }}</td>
+                  <td class="px-3 py-2">{{ p.status }}</td>
+                  <td class="px-3 py-2 text-right">R{{ p.monthlyPremium }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                    No policies.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
   `,
@@ -35,12 +64,16 @@ import { AuthService } from '@aic/shared/auth';
 export class HomePage {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
 
-  protected readonly cards = [
-    { title: 'Claims queue', body: 'Placeholder for the active claims list.' },
-    { title: 'Policies', body: 'Search and manage customer policies.' },
-    { title: 'Risk alerts', body: 'Cases flagged for review.' },
-  ];
+  /** Policies fetched from this app's BFF (same-origin via the dev proxy). */
+  protected readonly policies = toSignal(
+    this.http.get<PoliciesResponse>('/api/policies').pipe(
+      map((r) => r.policies),
+      catchError(() => of([] as Policy[])),
+    ),
+    { initialValue: [] as Policy[] },
+  );
 
   async logout() {
     await this.auth.logout();

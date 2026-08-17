@@ -62,6 +62,8 @@ export async function registerAuthRoutes(app: BffServer, opts: AuthRoutesOptions
         audience: 'client',
         roles: ['customer'],
       };
+      // New server-side session id on auth (prevents session fixation).
+      await req.session.regenerate();
       req.session.set('user', user);
       return { user };
     },

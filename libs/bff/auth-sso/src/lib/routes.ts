@@ -57,7 +57,12 @@ export async function registerSsoAuthRoutes(
       if (!unsigned.valid || !unsigned.value) {
         throw badRequest('OIDC_STATE_MISMATCH', 'OIDC state cookie tampered with');
       }
-      const { state: expectedState, nonce, codeVerifier, returnTo } = JSON.parse(unsigned.value) as {
+      const {
+        state: expectedState,
+        nonce,
+        codeVerifier,
+        returnTo,
+      } = JSON.parse(unsigned.value) as {
         state: string;
         nonce: string;
         codeVerifier: string;
@@ -77,6 +82,8 @@ export async function registerSsoAuthRoutes(
         codeVerifier,
       });
 
+      // New server-side session id on auth (prevents session fixation).
+      await req.session.regenerate();
       req.session.set('user', user);
       reply.clearCookie(STATE_COOKIE, { path: '/' });
 

@@ -1,14 +1,13 @@
 import type { SessionUser } from '@aic/bff/contracts';
 
 /**
- * Augment Fastify's secure-session to be strongly typed with our SessionUser.
- *
- * Consumers (each BFF) import this type and use `req.session.get('user')`
- * with full type inference.
+ * Strongly type the server-side session (`@fastify/session`) with our
+ * `SessionUser`. Consumers use `req.session.get('user')` /
+ * `req.session.set('user', …)` with full type inference.
  */
-declare module '@fastify/secure-session' {
-  interface SessionData {
-    user: SessionUser;
+declare module 'fastify' {
+  interface Session {
+    user?: SessionUser;
   }
 }
 

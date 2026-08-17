@@ -29,6 +29,7 @@ async function start(): Promise<void> {
     sessionSecret: env.SESSION_SECRET,
     frontendOrigin: env.FRONTEND_ORIGIN,
     logPretty: env.LOG_PRETTY,
+    redisUrl: env.REDIS_URL,
     audience: 'broker',
   });
 

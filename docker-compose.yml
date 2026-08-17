@@ -1,0 +1,22 @@
+# Local infra for the AIC POC end-to-end slice.
+# Start:  docker compose up -d
+# Stop:   docker compose down
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: aic-redis
+    ports:
+      - '6379:6379'
+    # POC sessions are ephemeral — no volume needed. Add one if you want them
+    # to survive a container restart.
+    restart: unless-stopped
+
+  # Throwaway stand-in upstream API ("ESL"). Source in ./esl-stub — deliberately
+  # NOT an Nx project. Serves an OpenAPI doc + user-scoped data off the plain
+  # identity headers the BFF forwards.
+  esl:
+    build: ./esl-stub
+    container_name: aic-esl
+    ports:
+      - '8081:8080'
+    restart: unless-stopped

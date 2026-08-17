@@ -7,6 +7,7 @@ import {
 } from '@aic/bff/auth-sso';
 import { env } from './env';
 import { registerHealthRoutes } from './routes/health';
+import { registerPolicyRoutes } from './routes/policies';
 
 function buildProvider(bffOrigin: string): OidcProvider {
   switch (env.OIDC_MODE) {
@@ -40,6 +41,7 @@ async function start(): Promise<void> {
     sessionSecret: env.SESSION_SECRET,
     frontendOrigin: env.FRONTEND_ORIGIN,
     logPretty: env.LOG_PRETTY,
+    redisUrl: env.REDIS_URL,
     audience: 'agent',
   });
 
@@ -49,6 +51,7 @@ async function start(): Promise<void> {
   await registerHealthRoutes(app);
   await registerSessionRoutes(app);
   await registerSsoAuthRoutes(app, { provider, postLoginDefault: env.POST_LOGIN_DEFAULT });
+  await registerPolicyRoutes(app, { eslBaseUrl: env.ESL_BASE_URL });
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });

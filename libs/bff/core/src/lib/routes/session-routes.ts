@@ -21,7 +21,7 @@ export async function registerSessionRoutes(app: BffServer): Promise<void> {
   app.post('/api/auth/logout', {
     schema: { response: { 200: sessionResponseSchema } },
     handler: async (req) => {
-      req.session.delete();
+      await req.session.destroy();
       return { user: null };
     },
   });

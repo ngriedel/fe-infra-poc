@@ -28,6 +28,7 @@
       "@aic/shared/ui": ["./libs/shared/ui/src/index.ts"],
       "@aic/shared/auth": ["./libs/shared/auth/src/index.ts"],
       "@aic/bff/contracts": ["./libs/bff/contracts/src/index.ts"],
+      "@aic/bff/esl-client": ["./libs/bff/esl-client/src/index.ts"],
       "@aic/bff/core": ["./libs/bff/core/src/index.ts"],
       "@aic/bff/auth-sso": ["./libs/bff/auth-sso/src/index.ts"]
     }

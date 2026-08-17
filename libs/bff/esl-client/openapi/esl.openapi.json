@@ -1,0 +1,97 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "AIC ESL (stub)",
+    "description": "Throwaway upstream for the AIC POC end-to-end slice.",
+    "version": "1.0.0"
+  },
+  "servers": [{ "url": "http://localhost:8081", "description": "Generated server url" }],
+  "tags": [{ "name": "policies", "description": "User-scoped insurance policies (stub data)." }],
+  "paths": {
+    "/api/policies": {
+      "get": {
+        "tags": ["policies"],
+        "summary": "List the policies owned by the identified user.",
+        "operationId": "policies",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "description": "Opaque user id forwarded by the BFF",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Policy" } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": ["policies"],
+        "summary": "Echo the identity the BFF forwarded (dev sanity check).",
+        "operationId": "me",
+        "parameters": [
+          {
+            "name": "X-User-Id",
+            "in": "header",
+            "description": "Opaque user id forwarded by the BFF",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-User-Email",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-User-Roles",
+            "in": "header",
+            "required": false,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Identity" } }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Policy": {
+        "required": ["id", "monthlyPremium", "product", "status"],
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "product": { "type": "string" },
+          "status": { "type": "string" },
+          "monthlyPremium": { "type": "integer", "format": "int32" }
+        }
+      },
+      "Identity": {
+        "required": ["email", "roles", "userId"],
+        "type": "object",
+        "properties": {
+          "userId": { "type": "string" },
+          "email": { "type": "string" },
+          "roles": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    }
+  }
+}

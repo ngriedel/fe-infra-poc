@@ -12,6 +12,8 @@ const rawEnv = loadEnv({
   AZURE_AUTHORITY: z.string().url().optional(),
   /** Where to send the user after a successful login if no returnTo. */
   POST_LOGIN_DEFAULT: z.string().default('/'),
+  /** Base URL of the upstream ESL (the stub runs in docker-compose on :8081). */
+  ESL_BASE_URL: z.string().url().default('http://localhost:8081'),
 });
 
 if (rawEnv.OIDC_MODE === 'azure') {
@@ -19,9 +21,7 @@ if (rawEnv.OIDC_MODE === 'azure') {
     ['AZURE_TENANT_ID', 'AZURE_CLIENT_ID', 'AZURE_CLIENT_SECRET', 'AZURE_REDIRECT_URI'] as const
   ).filter((k) => !rawEnv[k]);
   if (missing.length) {
-    throw new Error(
-      `OIDC_MODE=azure but missing required env vars: ${missing.join(', ')}`,
-    );
+    throw new Error(`OIDC_MODE=azure but missing required env vars: ${missing.join(', ')}`);
   }
 }
 
