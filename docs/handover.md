@@ -16,6 +16,8 @@ the tenant setup, gotchas, and the deviations still to close.
   - Infra (docker-compose): **Redis** (6379), **ESL stub** (8081).
 - **Deeper context (all current):**
   - [feature-overview.md](feature-overview.md) — app architecture.
+  - [auth-flow.md](auth-flow.md) — plain-English walkthrough of the whole login flow
+    (browser → cookie → Redis → Entra → ESL). Start here if auth is unfamiliar.
   - [spartan-ui-architecture.md](spartan-ui-architecture.md) — UI (Tailwind v4 + Spartan 1.0 helm).
   - [bff-security-review.md](bff-security-review.md) — BFF audit: fixed items + standing hardening.
   - [session-strategy.md](session-strategy.md), [angular-22-upgrade.md](angular-22-upgrade.md).
