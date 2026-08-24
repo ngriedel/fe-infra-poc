@@ -43,6 +43,17 @@ import { AuthService } from './auth.service';
               <span class="block text-xs text-muted-foreground">
                 Dev OTP: <code class="font-mono">{{ devOtp() }}</code>
               </span>
+            } @else {
+              <span class="block text-xs text-muted-foreground">
+                Dev: read it in the Mailpit inbox at
+                <a
+                  href="http://localhost:8025"
+                  target="_blank"
+                  rel="noreferrer"
+                  class="underline underline-offset-4 hover:text-foreground"
+                  >localhost:8025</a
+                >.
+              </span>
             }
           </p>
           <label class="block space-y-1">

@@ -20,3 +20,14 @@ services:
     ports:
       - '8081:8080'
     restart: unless-stopped
+
+  # Dev mail catcher for the client OTP tier. Accepts any SMTP on :1025 and
+  # never forwards it anywhere; read the mail at http://localhost:8025.
+  # (Mailpit is the maintained successor to the abandoned MailHog.)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: aic-mailpit
+    ports:
+      - '1025:1025' # SMTP — client-bff sends here
+      - '8025:8025' # Web inbox — open this to read the code
+    restart: unless-stopped

@@ -66,5 +66,7 @@ export const authErrorCodeSchema = z.enum([
   'UNAUTHENTICATED',
   'OIDC_STATE_MISMATCH',
   'OIDC_EXCHANGE_FAILED',
+  /** Too many requests — the caller should back off and retry later. */
+  'RATE_LIMITED',
 ]);
 export type AuthErrorCode = z.infer<typeof authErrorCodeSchema>;

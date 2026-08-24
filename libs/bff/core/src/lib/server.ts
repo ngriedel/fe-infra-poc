@@ -1,4 +1,5 @@
 import Fastify, { type FastifyServerOptions } from 'fastify';
+import fastifyRateLimit from '@fastify/rate-limit';
 import {
   type ZodTypeProvider,
   serializerCompiler,
@@ -11,6 +12,14 @@ import { errorHandlerPlugin } from './plugins/error-handler.plugin';
 
 /** Session lifetime: cookie maxAge + Redis TTL. */
 const SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 hours
+
+/**
+ * Global request ceiling per IP. Deliberately loose — it's a backstop against
+ * runaway clients, not the real defence. Sensitive routes (OTP request/verify)
+ * set their own much tighter `config.rateLimit`.
+ */
+const GLOBAL_RATE_LIMIT_MAX = 300;
+const GLOBAL_RATE_LIMIT_WINDOW = '1 minute';
 
 export interface CreateBffServerOptions {
   nodeEnv: 'development' | 'test' | 'production';
@@ -33,6 +42,7 @@ export interface CreateBffServerOptions {
  *   - Zod request/response validation + serialization
  *   - Helmet + CORS locked to the matching frontend origin
  *   - Redis-backed server-side session (cookie namespaced per audience)
+ *   - Redis-backed rate limiting (loose global cap; routes tighten it)
  *   - Centralised error → JSON-envelope mapping
  *
  * Caller adds routes + per-app plugins.
@@ -67,6 +77,16 @@ export async function createBffServer(opts: CreateBffServerOptions) {
     cookieName: `sid.${opts.audience}`,
     redisUrl: opts.redisUrl,
     ttlSeconds: SESSION_TTL_SECONDS,
+  });
+  // After sessionPlugin — reuses the Redis connection it decorates, so limits
+  // are shared across BFF instances instead of being per-process.
+  await app.register(fastifyRateLimit, {
+    global: true,
+    max: GLOBAL_RATE_LIMIT_MAX,
+    timeWindow: GLOBAL_RATE_LIMIT_WINDOW,
+    redis: app.redis,
+    // Keep this BFF's counters separate from the other audiences sharing Redis.
+    nameSpace: `rl:${opts.audience}:`,
   });
   await app.register(errorHandlerPlugin);
 

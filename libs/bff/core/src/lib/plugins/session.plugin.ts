@@ -33,6 +33,10 @@ export const sessionPlugin = fp(async (app, opts: SessionPluginOptions) => {
   await app.register(fastifyCookie, { secret: opts.secret });
 
   const redis = new Redis(opts.redisUrl);
+  // Shared connection: the session store owns its lifecycle, but features like
+  // the OTP challenge store and rate limiter reuse it rather than each opening
+  // their own socket to the same server.
+  app.decorate('redis', redis);
   app.addHook('onClose', async () => {
     await redis.quit();
   });
@@ -51,3 +55,10 @@ export const sessionPlugin = fp(async (app, opts: SessionPluginOptions) => {
     },
   });
 });
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** Shared ioredis connection, registered by `sessionPlugin`. */
+    redis: Redis;
+  }
+}

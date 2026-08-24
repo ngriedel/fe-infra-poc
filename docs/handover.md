@@ -1,8 +1,8 @@
 # Handover — next steps
 
-Working handover for a fresh session. Read this + the linked docs, then start with **§4**.
-§3 (dealer/broker email/password via Entra External ID) is **done** — kept as reference for
-the tenant setup, gotchas, and the deviations still to close.
+Working handover for a fresh session. Read this + the linked docs, then start with **§5**.
+§3 (dealer/broker via Entra External ID) and §4 (client OTP tier) are **done** — kept as
+reference for the tenant setup, gotchas, and deliberately-deferred items.
 
 ---
 
@@ -13,7 +13,7 @@ the tenant setup, gotchas, and the deviations still to close.
   - FE: `client` (4200), `agent` (4201), `dealer` (4202), `broker` (4203).
   - BFF: `client-bff` (3001), `agent-bff` (3002), `dealer-bff` (3003), `broker-bff` (3004).
   - Libs: `bff/{core,contracts,auth-sso,esl-client}`, `shared/{ui,auth}`.
-  - Infra (docker-compose): **Redis** (6379), **ESL stub** (8081).
+  - Infra (docker-compose): **Redis** (6379), **ESL stub** (8081), **Mailpit** (1025 SMTP / 8025 inbox).
 - **Deeper context (all current):**
   - [feature-overview.md](feature-overview.md) — app architecture.
   - [auth-flow.md](auth-flow.md) — plain-English walkthrough of the whole login flow
@@ -25,14 +25,14 @@ the tenant setup, gotchas, and the deviations still to close.
 
 ## 2. Current state (done + verified, committed on `azure`)
 
-| Area                                                                                                                                                           | State                                                                          |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| UI — Tailwind v4, canonical Spartan 1.0 helm, shared token theme, dark/light/system toggle                                                                     | ✅                                                                             |
-| **Agent SSO** — real Entra **workforce** OIDC (openid-client v5, PKCE + nonce + id_token validation), audience isolation                                       | ✅ proven E2E in browser                                                       |
-| Sessions — `@fastify/session` + **Redis** (opaque signed id, 8h TTL, `regenerate()` on login)                                                                  | ✅ verified                                                                    |
-| Enterprise upstream slice — Spring Boot **ESL stub** (OpenAPI) → generated Zod client (`esl-client`) → agent-bff forwards identity → agent FE renders policies | ✅ verified E2E                                                                |
-| **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3)                                              |
-| client OTP tier                                                                                                                                                | ⚠️ CSPRNG OTP + attempts + Redis-ready, but **no real mailer / no rate-limit** |
+| Area                                                                                                                                                           | State                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| UI — Tailwind v4, canonical Spartan 1.0 helm, shared token theme, dark/light/system toggle                                                                     | ✅                                |
+| **Agent SSO** — real Entra **workforce** OIDC (openid-client v5, PKCE + nonce + id_token validation), audience isolation                                       | ✅ proven E2E in browser          |
+| Sessions — `@fastify/session` + **Redis** (opaque signed id, 8h TTL, `regenerate()` on login)                                                                  | ✅ verified                       |
+| Enterprise upstream slice — Spring Boot **ESL stub** (OpenAPI) → generated Zod client (`esl-client`) → agent-bff forwards identity → agent FE renders policies | ✅ verified E2E                   |
+| **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3) |
+| **client OTP tier** — Redis-backed challenges, HMAC-hashed codes, real mailer (Mailpit), rate-limited                                                          | ✅ verified E2E                   |
 
 **Full gate is green:** `nx run-many -t lint test build typecheck` (16 projects) + `nx format:check`.
 
@@ -45,7 +45,7 @@ If `pnpm` isn't on PATH in a shell, use `corepack pnpm …` or `./node_modules/.
 
 > **Status: complete and proven E2E in the browser on 2026-08-24.** Kept in full below
 > because it documents the tenant setup, the gotchas hit, and the known deviations.
-> Next work is **§4**.
+> Next work is **§5**.
 
 ### Goal & why it was small
 
@@ -151,24 +151,63 @@ Verified on first login; no code change was needed:
 
 ---
 
-## 4. NEXT
+## 4. DONE: client OTP tier
 
-- **Close the tier-2 gaps above** when moving to a corporate tenant: disable self-service
-  sign-up, add app-assignment + app roles, then drop `defaultRoles`.
-- **client OTP tier:** real transactional mailer (dev inbox Ethereal/Mailhog), `@fastify/rate-limit`
-  on `/api/auth/request` + `/verify`. The OTP already uses CSPRNG + an attempts counter.
-- **Standing BFF hardening** (see [bff-security-review.md](bff-security-review.md)): rate-limit,
-  CSRF posture (Origin/Sec-Fetch-Site or `@fastify/csrf-protection`), OTP hashing at rest,
-  graceful shutdown, `trustProxy`/`bodyLimit`, move `pino-pretty` to devDeps.
-- **BFF → ESL is unauthenticated**: identity is asserted in plain `X-User-*` headers and the
-  ESL trusts them. Fine while the ESL isn't externally reachable; production needs HMAC
-  signing or a service token.
-- **CI:** wire `nx affected -t lint test build typecheck` (+ `format:check`) into a pipeline —
-  the gate exists but nothing runs it automatically.
+The public tier was a placeholder (in-memory store, plaintext codes, a `TODO(prod)` where
+the mail send should be). Now real:
+
+- **`ChallengeStore` is Redis-backed** (`otp:<id>` hash, 10-min TTL). Expiry is Redis's job,
+  so there's no sweep and no window where an expired record is still readable.
+- **Codes are never stored** — only an HMAC-SHA256, keyed by the BFF's `SESSION_SECRET` and
+  salted with the challenge id. Compared with `timingSafeEqual`. A Redis dump yields nothing.
+- **Attempts capped at 5** via atomic `HINCRBY`; the challenge is destroyed on the 5th wrong
+  guess, so the 6-digit space can't be walked.
+- **Real mailer** — nodemailer → **Mailpit** (new docker-compose service; SMTP `:1025`, web
+  inbox **http://localhost:8025**). Mailpit is the maintained successor to MailHog and
+  forwards nothing, so real addresses are safe in testing. Swapping in SES/SendGrid is a
+  config change behind `createMailer`.
+- **`EXPOSE_DEV_OTP` now defaults to FALSE**, so the normal path exercises the real send.
+  Set it to `true` in `apps/client-bff/.env` to have the login form auto-fill again. Refused
+  outright when `NODE_ENV=production`.
+
+**Rate limiting is now global**, registered in `createBffServer` so all four BFFs get it:
+loose 300/min per IP as a backstop, Redis-backed (shared across instances) and namespaced
+per audience. The OTP routes tighten it — `/api/auth/request` 5 per 10 min,
+`/api/auth/verify` 10 per 10 min.
+
+**Bug found and fixed while doing this:** the central error handler flattened _every_
+unrecognised throwable to a 500, including errors that already carried a status — so the
+rate limiter's 429 surfaced as `INTERNAL_ERROR`, as would a malformed JSON body's 400. It
+now preserves any 4xx (5xx still becomes an opaque `INTERNAL_ERROR`) and maps 429 to a
+`RATE_LIMITED` contract code.
+
+**Verified E2E:** code requested → mail lands in Mailpit → Redis holds only the hash → wrong
+codes increment attempts 1-4 then destroy the challenge on 5 → correct code creates a
+`client` session → 6th request in the window returns 429 `RATE_LIMITED`.
 
 ---
 
-## 5. Reference
+## 5. NEXT
+
+- **Remaining BFF hardening** (see [bff-security-review.md](bff-security-review.md)): CSRF
+  posture (Origin/Sec-Fetch-Site or `@fastify/csrf-protection`), graceful shutdown,
+  `trustProxy`/`bodyLimit`, move `pino-pretty` to devDeps. Rate-limit and OTP-hashing are
+  now done.
+- **Close the tier-2 Entra gaps** when moving to a corporate tenant: disable self-service
+  sign-up, add app-assignment + app roles, then drop `defaultRoles`. Deliberately deferred —
+  the corporate tenant will be built from scratch anyway, and it's config-only.
+- **BFF → ESL is unauthenticated**: identity is asserted in plain `X-User-*` headers and the
+  ESL trusts them. Deliberately out of POC scope — HMAC is an established in-house pattern
+  to apply at integration time.
+- **Rate-limit keying** is per-IP only. Keying `/api/auth/request` on the email as well would
+  stop one host burning through many addresses; needs a `preHandler` hook so the body is
+  parsed first.
+- **CI** (out of POC scope — GoCD + devops conversation): the gate exists but nothing runs
+  it automatically.
+
+---
+
+## 6. Reference
 
 - **Ports:** FE 4200/4201/4202/4203 · BFF 3001/3002/3003/3004 · Redis 6379 · ESL 8081.
 - **Gate:** `nx run-many -t lint test build typecheck` + `nx format:check`. Angular apps are

@@ -1,6 +1,7 @@
 import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
 import { env } from './env';
 import { registerAuthRoutes } from './auth/routes';
+import { createMailer } from './auth/mailer';
 import { registerHealthRoutes } from './routes/health';
 
 async function start(): Promise<void> {
@@ -13,12 +14,25 @@ async function start(): Promise<void> {
     audience: 'client',
   });
 
+  const mailer = createMailer({
+    host: env.SMTP_HOST,
+    port: env.SMTP_PORT,
+    from: env.MAIL_FROM,
+  });
+
   await registerHealthRoutes(app);
   await registerSessionRoutes(app);
-  await registerAuthRoutes(app, { exposeDevOtp: env.NODE_ENV !== 'production' });
+  await registerAuthRoutes(app, {
+    exposeDevOtp: env.EXPOSE_DEV_OTP,
+    mailer,
+    // The session secret doubles as the OTP pepper — one secret per BFF to
+    // rotate, and it never leaves the server.
+    otpSecret: env.SESSION_SECRET,
+  });
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });
+    app.log.info({ smtp: `${env.SMTP_HOST}:${env.SMTP_PORT}` }, 'client-bff ready');
   } catch (err) {
     app.log.error(err);
     process.exit(1);
