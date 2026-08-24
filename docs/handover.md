@@ -1,8 +1,8 @@
 # Handover — next steps
 
-Working handover for a fresh session. Read this + the linked docs, then start with **§5**.
-§3 (dealer/broker via Entra External ID) and §4 (client OTP tier) are **done** — kept as
-reference for the tenant setup, gotchas, and deliberately-deferred items.
+Working handover for a fresh session. Read this + the linked docs, then start with **§6**.
+§3 (dealer/broker via Entra External ID), §4 (client OTP tier) and §5 (BFF hardening) are
+**done** — kept as reference for setup, gotchas, and deliberately-deferred items.
 
 ---
 
@@ -33,6 +33,7 @@ reference for the tenant setup, gotchas, and deliberately-deferred items.
 | Enterprise upstream slice — Spring Boot **ESL stub** (OpenAPI) → generated Zod client (`esl-client`) → agent-bff forwards identity → agent FE renders policies | ✅ verified E2E                   |
 | **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3) |
 | **client OTP tier** — Redis-backed challenges, HMAC-hashed codes, real mailer (Mailpit), rate-limited                                                          | ✅ verified E2E                   |
+| **BFF hardening** — CSRF header checks, rate limiting, `trustProxy`, `bodyLimit`, prod-safe logging, graceful shutdown                                         | ✅ verified (see §5)              |
 
 **Full gate is green:** `nx run-many -t lint test build typecheck` (16 projects) + `nx format:check`.
 
@@ -45,7 +46,7 @@ If `pnpm` isn't on PATH in a shell, use `corepack pnpm …` or `./node_modules/.
 
 > **Status: complete and proven E2E in the browser on 2026-08-24.** Kept in full below
 > because it documents the tenant setup, the gotchas hit, and the known deviations.
-> Next work is **§5**.
+> Next work is **§6**.
 
 ### Goal & why it was small
 
@@ -187,12 +188,78 @@ codes increment attempts 1-4 then destroy the challenge on 5 → correct code cr
 
 ---
 
-## 5. NEXT
+## 5. DONE: BFF hardening
 
-- **Remaining BFF hardening** (see [bff-security-review.md](bff-security-review.md)): CSRF
-  posture (Origin/Sec-Fetch-Site or `@fastify/csrf-protection`), graceful shutdown,
-  `trustProxy`/`bodyLimit`, move `pino-pretty` to devDeps. Rate-limit and OTP-hashing are
-  now done.
+Closes the remaining open items from [bff-security-review.md](bff-security-review.md). All
+of it lands in `libs/bff/core`, so every BFF gets it at once.
+
+- **CSRF defence-in-depth** — an `onRequest` hook in `securityPlugin` rejects unsafe methods
+  (POST/PUT/PATCH/DELETE) when `Sec-Fetch-Site` is present and isn't `same-origin`, or
+  `Origin` is present and doesn't match `FRONTEND_ORIGIN`. Note **CORS does not cover this**:
+  a cross-site form POST is a "simple request" with no preflight, so the server still runs
+  it — CORS only stops the attacker reading the response. The specific gap closed is that
+  `SameSite=lax` trusts **same-site**, so a hostile subdomain still gets the cookie attached;
+  `Sec-Fetch-Site` separates `same-site` from `same-origin`.
+  **Deliberate fail-open:** if neither header is present, allow. Every browser has sent
+  `Origin` on cross-origin POSTs since CORS existed, so a browser attack always carries one.
+  What's left is non-browser callers (curl, probes, service-to-service) which can't mount
+  CSRF at all — they have no ambient cookie. Requiring the headers would break tooling for
+  no gain. Chose this over `@fastify/csrf-protection`: token-based CSRF needs a token
+  endpoint and FE plumbing, and buys nothing over header checks for a same-origin JSON API.
+- **`TRUST_PROXY`** (new base env, default `false`) — accepts `false` | `true` | hop count |
+  CSV of CIDRs. This matters _because of_ the rate limiting: it keys on `req.ip`, so behind a
+  load balancer with this off, every user shares the balancer's IP and one bucket — a handful
+  of requests locks everyone out. Turned on while directly reachable, clients can spoof
+  `X-Forwarded-For` for a fresh bucket per request. Prefer a hop count or CIDR over `true`.
+- **`bodyLimit` 64KB** (Fastify default is 1MB) — these BFFs take an email and a 6-digit code.
+- **`pino-pretty` moved to devDependencies.** This needed a second change to be safe:
+  `LOG_PRETTY` used to default to `'true'`, so a prod deploy that didn't set it explicitly
+  would try to load a transport that is no longer installed and die at boot. The default is
+  now derived from `NODE_ENV` in `loadEnv` (pretty in dev, NDJSON in prod).
+- **Graceful shutdown** — `registerGracefulShutdown(app)` exported from core, called from each
+  `main.ts`. `SIGTERM`/`SIGINT` → `app.close()`, which drains in-flight requests and runs the
+  `onClose` hook that quits Redis; 10s force-exit backstop and a re-entry guard. Registered
+  explicitly rather than inside `createBffServer` — a library silently attaching process-level
+  signal handlers is unpleasant in tests.
+
+**Deliberately skipped:** `SESSION_SECRET` rotation array. It buys zero-downtime secret
+rotation, a production ops concern with no POC equivalent, and should be decided with
+whoever owns secret management.
+
+### Verified
+
+| Check                                               | Result                                 |
+| --------------------------------------------------- | -------------------------------------- |
+| POST with `Sec-Fetch-Site: cross-site`              | 403 `CROSS_ORIGIN_BLOCKED`             |
+| POST with `Sec-Fetch-Site: same-site` (the lax gap) | 403 `CROSS_ORIGIN_BLOCKED`             |
+| POST with foreign `Origin`                          | 403 `CROSS_ORIGIN_BLOCKED`             |
+| POST same-origin from the real FE origin            | 200                                    |
+| POST with neither header (curl)                     | 200 — allowed by design                |
+| GET with `Sec-Fetch-Site: cross-site`               | 401, not 403 — safe method             |
+| 100KB body / small body                             | 413 `FST_ERR_CTP_BODY_TOO_LARGE` / 200 |
+| `NODE_ENV=production`, `LOG_PRETTY` unset           | NDJSON — no `pino-pretty` needed       |
+| `NODE_ENV=development`, `LOG_PRETTY` unset          | pretty                                 |
+
+⚠️ **Graceful shutdown is verified by inspection only.** Windows terminates a spawned process
+rather than delivering a catchable `SIGTERM`/`SIGINT`, so the handler cannot be exercised on
+this machine — a test confirmed the process dies without running it. The code is standard and
+type-checked, and the deployment target (Linux containers) delivers real signals. **Re-verify
+on the first containerised run** by checking for `Shutting down gracefully` / `Shutdown
+complete` in the logs on `docker stop`.
+
+---
+
+## 6. NEXT
+
+- **BFF tests — the highest-value item left.** There are none; `typecheck` stands in. Two bugs
+  this week would have been caught instantly by one: the 429 surfacing as a 500, and the
+  cookie-signing throw the original audit found. Suggested minimum, via `fastify.inject`: OTP
+  happy path, wrong-code-exhausts-attempts, audience guard rejects a foreign session,
+  rate-limit trip, CSRF hook blocks cross-site. Roughly an hour.
+- **Rate-limit keying is per-IP only.** A distributed flood at one address (many IPs, each
+  under the limit) still mail-bombs that inbox. The fix is a second, email-keyed counter in
+  the handler — `INCR`/`EXPIRE` on a hash of the normalised address. Normalise for
+  plus-addressing and Gmail dots or it's trivially bypassed. Deliberately deferred.
 - **Close the tier-2 Entra gaps** when moving to a corporate tenant: disable self-service
   sign-up, add app-assignment + app roles, then drop `defaultRoles`. Deliberately deferred —
   the corporate tenant will be built from scratch anyway, and it's config-only.
@@ -207,7 +274,7 @@ codes increment attempts 1-4 then destroy the challenge on 5 → correct code cr
 
 ---
 
-## 6. Reference
+## 7. Reference
 
 - **Ports:** FE 4200/4201/4202/4203 · BFF 3001/3002/3003/3004 · Redis 6379 · ESL 8081.
 - **Gate:** `nx run-many -t lint test build typecheck` + `nx format:check`. Angular apps are

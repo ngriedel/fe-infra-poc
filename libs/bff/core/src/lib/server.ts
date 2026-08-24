@@ -21,6 +21,12 @@ const SESSION_TTL_SECONDS = 60 * 60 * 8; // 8 hours
 const GLOBAL_RATE_LIMIT_MAX = 300;
 const GLOBAL_RATE_LIMIT_WINDOW = '1 minute';
 
+/**
+ * Max request body. These BFFs take an email and a 6-digit code — Fastify's 1MB
+ * default lets a caller make us buffer a megabyte before validation rejects it.
+ */
+const BODY_LIMIT_BYTES = 64 * 1024;
+
 export interface CreateBffServerOptions {
   nodeEnv: 'development' | 'test' | 'production';
   sessionSecret: string;
@@ -34,6 +40,11 @@ export interface CreateBffServerOptions {
    * minted by another (cross-audience confusion / privilege escalation).
    */
   audience: SessionUser['audience'];
+  /**
+   * Whether to trust `X-Forwarded-*` when deriving `req.ip` (from `TRUST_PROXY`).
+   * Governs rate-limit bucketing — see the env docs. Defaults to off.
+   */
+  trustProxy?: boolean | number | string;
 }
 
 /**
@@ -55,6 +66,8 @@ export async function createBffServer(opts: CreateBffServerOptions) {
           transport: { target: 'pino-pretty', options: { translateTime: 'HH:MM:ss.l' } },
         }
       : { level: 'info' },
+    trustProxy: opts.trustProxy ?? false,
+    bodyLimit: BODY_LIMIT_BYTES,
   };
 
   const app = Fastify(fastifyOpts).withTypeProvider<ZodTypeProvider>();

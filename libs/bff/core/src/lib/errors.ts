@@ -17,3 +17,5 @@ export const badRequest = (code: string, message: string, details?: Record<strin
   new AppError(code, message, 400, details);
 
 export const notFound = (message = 'Not found') => new AppError('NOT_FOUND', message, 404);
+
+export const forbidden = (code: string, message: string) => new AppError(code, message, 403);

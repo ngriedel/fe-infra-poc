@@ -1,4 +1,4 @@
-import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
+import { createBffServer, registerSessionRoutes, registerGracefulShutdown } from '@aic/bff/core';
 import {
   registerSsoAuthRoutes,
   StubOidcProvider,
@@ -53,6 +53,7 @@ async function start(): Promise<void> {
     logPretty: env.LOG_PRETTY,
     redisUrl: env.REDIS_URL,
     audience: 'dealer',
+    trustProxy: env.TRUST_PROXY,
   });
 
   const bffOrigin = `http://${env.HOST === '0.0.0.0' ? 'localhost' : env.HOST}:${env.PORT}`;
@@ -62,6 +63,8 @@ async function start(): Promise<void> {
   await registerSessionRoutes(app);
   await registerSsoAuthRoutes(app, { provider, postLoginDefault: env.POST_LOGIN_DEFAULT });
   await registerPolicyRoutes(app, { eslBaseUrl: env.ESL_BASE_URL });
+
+  registerGracefulShutdown(app);
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });

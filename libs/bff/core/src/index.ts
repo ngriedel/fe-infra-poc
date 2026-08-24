@@ -1,4 +1,5 @@
-export { AppError, unauthenticated, badRequest, notFound } from './lib/errors';
+export { AppError, unauthenticated, badRequest, notFound, forbidden } from './lib/errors';
+export { registerGracefulShutdown, type GracefulShutdownOptions } from './lib/graceful-shutdown';
 export { loadEnv, type BaseEnv } from './lib/env';
 export { createBffServer, type BffServer, type CreateBffServerOptions } from './lib/server';
 export { requireSession } from './lib/guards/require-session';

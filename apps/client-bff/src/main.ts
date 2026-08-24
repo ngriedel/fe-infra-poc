@@ -1,4 +1,4 @@
-import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
+import { createBffServer, registerSessionRoutes, registerGracefulShutdown } from '@aic/bff/core';
 import { env } from './env';
 import { registerAuthRoutes } from './auth/routes';
 import { createMailer } from './auth/mailer';
@@ -12,6 +12,7 @@ async function start(): Promise<void> {
     logPretty: env.LOG_PRETTY,
     redisUrl: env.REDIS_URL,
     audience: 'client',
+    trustProxy: env.TRUST_PROXY,
   });
 
   const mailer = createMailer({
@@ -29,6 +30,8 @@ async function start(): Promise<void> {
     // rotate, and it never leaves the server.
     otpSecret: env.SESSION_SECRET,
   });
+
+  registerGracefulShutdown(app);
 
   try {
     await app.listen({ host: env.HOST, port: env.PORT });
