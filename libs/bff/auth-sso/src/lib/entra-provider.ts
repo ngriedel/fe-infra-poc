@@ -21,6 +21,12 @@ export interface EntraOidcProviderConfig {
   audience: SessionUser['audience'];
   /** Space-delimited scopes. Defaults to `openid profile email`. */
   scopes?: string;
+  /**
+   * Roles to stamp when the id_token carries no `roles` claim. External ID
+   * (CIAM) tenants omit `roles` unless app roles are defined and assigned, so
+   * tier-2 apps use this to grant their baseline role (e.g. `['dealer']`).
+   */
+  defaultRoles?: string[];
 }
 
 /**
@@ -87,15 +93,23 @@ export class EntraOidcProvider implements OidcProvider {
 
   private toSessionUser(claims: IdTokenClaims): SessionUser {
     // `oid` is the stable per-tenant user object id; `sub` is app+user specific.
-    // `oid`/`roles` come from the id_token's custom-claim index signature → bracket access.
+    // `oid`/`roles`/`emails` come from the custom-claim index signature → bracket access.
     const id = (claims['oid'] as string | undefined) ?? claims.sub;
+    // Workforce emits `email`; External ID (CIAM) commonly emits `emails: [..]`
+    // for local (email+password) accounts and may emit neither, leaving only
+    // `preferred_username`. Try all three before the synthetic fallback.
+    const emails = claims['emails'];
     const email =
       (claims.email as string | undefined) ??
+      (Array.isArray(emails) ? (emails[0] as string | undefined) : undefined) ??
       (claims.preferred_username as string | undefined) ??
       `${id}@no-email.local`;
     const displayName = (claims.name as string | undefined) ?? email;
     const rawRoles = claims['roles'];
-    const roles = Array.isArray(rawRoles) ? (rawRoles as string[]) : [];
+    const roles =
+      Array.isArray(rawRoles) && rawRoles.length
+        ? (rawRoles as string[])
+        : (this.cfg.defaultRoles ?? []);
     return { id, email, displayName, audience: this.cfg.audience, roles };
   }
 }

@@ -14,11 +14,11 @@ import { AuthService } from '@aic/shared/auth';
         <p class="text-sm text-muted-foreground">Sign in with your broker account.</p>
       </header>
 
-      <button hlmBtn class="w-full" (click)="auth.beginLogin('/')">Continue with Microsoft</button>
+      <button hlmBtn class="w-full" (click)="auth.beginLogin('/')">Sign in</button>
 
       <p class="text-xs text-muted-foreground">
-        Dev: this calls /api/auth/login which the stub provider auto-completes back to
-        /api/auth/callback.
+        You'll be taken to a secure page to enter your email and password. Accounts are issued by
+        AIC — there is no self-service sign-up.
       </p>
     </main>
   `,

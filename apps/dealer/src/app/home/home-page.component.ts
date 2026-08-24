@@ -1,7 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
+import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
 
 @Component({
   selector: 'dealer-home-page',
@@ -21,12 +23,57 @@ import { AuthService } from '@aic/shared/auth';
         <button hlmBtn size="sm" variant="outline" (click)="logout()">Sign out</button>
       </header>
 
-      <section class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        @for (card of cards; track card.title) {
-          <article class="rounded-md border border-border bg-card p-4 text-card-foreground">
-            <h3 class="text-sm font-medium">{{ card.title }}</h3>
-            <p class="mt-1 text-xs text-muted-foreground">{{ card.body }}</p>
-          </article>
+      <section class="space-y-3">
+        <div class="flex items-end justify-between gap-4">
+          <div class="space-y-1">
+            <h2 class="text-sm font-medium">Upstream policies</h2>
+            <p class="text-xs text-muted-foreground">
+              Fetched on demand through the whole authenticated chain: Angular → dealer-bff (session
+              cookie, audience-checked) → ESL (identity forwarded as X-User-* headers).
+            </p>
+          </div>
+          <button hlmBtn size="sm" [disabled]="loading()" (click)="fetchPolicies()">
+            {{ loading() ? 'Fetching…' : 'Fetch policies' }}
+          </button>
+        </div>
+
+        @if (error(); as message) {
+          <p
+            class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+          >
+            {{ message }}
+          </p>
+        }
+
+        @if (policies(); as rows) {
+          <div class="overflow-hidden rounded-md border border-border">
+            <table class="w-full text-sm">
+              <thead class="bg-muted text-muted-foreground">
+                <tr>
+                  <th class="px-3 py-2 text-left font-medium">Policy</th>
+                  <th class="px-3 py-2 text-left font-medium">Product</th>
+                  <th class="px-3 py-2 text-left font-medium">Status</th>
+                  <th class="px-3 py-2 text-right font-medium">Monthly</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (p of rows; track p.id) {
+                  <tr class="border-t border-border">
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.id }}</td>
+                    <td class="px-3 py-2">{{ p.product }}</td>
+                    <td class="px-3 py-2">{{ p.status }}</td>
+                    <td class="px-3 py-2 text-right">R{{ p.monthlyPremium }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                      No policies returned for this identity.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       </section>
     </main>
@@ -35,12 +82,36 @@ import { AuthService } from '@aic/shared/auth';
 export class HomePage {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly http = inject(HttpClient);
 
-  protected readonly cards = [
-    { title: 'Stock', body: 'Placeholder for the dealer vehicle inventory.' },
-    { title: 'Finance applications', body: 'Submit and track customer finance deals.' },
-    { title: 'Payouts', body: 'Settlement and payout status.' },
-  ];
+  /** `null` until the first fetch, so the table stays hidden on load. */
+  protected readonly policies = signal<Policy[] | null>(null);
+  protected readonly loading = signal(false);
+  protected readonly error = signal<string | null>(null);
+
+  /**
+   * Same-origin call via the dev proxy, so the session cookie rides along.
+   * dealer-bff's `requireSession` rejects anything that isn't a dealer session
+   * before it ever reaches the ESL.
+   */
+  protected fetchPolicies(): void {
+    this.loading.set(true);
+    this.error.set(null);
+    this.http.get<PoliciesResponse>('/api/policies').subscribe({
+      next: (res) => {
+        this.policies.set(res.policies);
+        this.loading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.error.set(
+          err.status === 401
+            ? 'Not authenticated — your session may have expired. Sign in again.'
+            : `Could not reach the ESL through the BFF (HTTP ${err.status}).`,
+        );
+        this.loading.set(false);
+      },
+    });
+  }
 
   async logout() {
     await this.auth.logout();
