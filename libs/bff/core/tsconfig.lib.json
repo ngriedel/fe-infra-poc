@@ -5,5 +5,8 @@
     "declaration": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  // Specs are type-checked by `tsconfig.spec.json` (which pulls in jest types)
+  // and must not be part of the library build.
+  "exclude": ["src/**/*.spec.ts"]
 }

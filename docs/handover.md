@@ -1,8 +1,8 @@
 # Handover — next steps
 
-Working handover for a fresh session. Read this + the linked docs, then start with **§6**.
-§3 (dealer/broker via Entra External ID), §4 (client OTP tier) and §5 (BFF hardening) are
-**done** — kept as reference for setup, gotchas, and deliberately-deferred items.
+Working handover for a fresh session. Read this + the linked docs, then start with **§7**.
+§3 (dealer/broker via Entra External ID), §4 (client OTP tier), §5 (BFF hardening) and §6
+(BFF tests) are **done** — kept as reference for setup, gotchas, and deferred items.
 
 ---
 
@@ -34,10 +34,11 @@ Working handover for a fresh session. Read this + the linked docs, then start wi
 | **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3) |
 | **client OTP tier** — Redis-backed challenges, HMAC-hashed codes, real mailer (Mailpit), rate-limited                                                          | ✅ verified E2E                   |
 | **BFF hardening** — CSRF header checks, rate limiting, `trustProxy`, `bodyLimit`, prod-safe logging, graceful shutdown                                         | ✅ verified (see §5)              |
+| **BFF tests** — 28 hermetic tests over the CSRF hook, error envelope, audience guard and OTP store; mutation-checked                                           | ✅ verified (see §6)              |
 
-**Full gate is green:** `nx run-many -t lint test build typecheck` (16 projects) + `nx format:check`.
+**Full gate is green:** `nx run-many -t lint test build typecheck` (16 projects, 37 tests across 8) + `nx format:check`.
 
-**Run it:** `docker compose up -d` (Redis + ESL), then `pnpm dev` (all 8 apps) or `nx serve <project>`.
+**Run it:** `docker compose up -d` (Redis + ESL + Mailpit), then `pnpm dev` (all 8 apps) or `nx serve <project>`.
 If `pnpm` isn't on PATH in a shell, use `corepack pnpm …` or `./node_modules/.bin/nx …`.
 
 ---
@@ -46,7 +47,7 @@ If `pnpm` isn't on PATH in a shell, use `corepack pnpm …` or `./node_modules/.
 
 > **Status: complete and proven E2E in the browser on 2026-08-24.** Kept in full below
 > because it documents the tenant setup, the gotchas hit, and the known deviations.
-> Next work is **§6**.
+> Next work is **§7**.
 
 ### Goal & why it was small
 
@@ -249,32 +250,73 @@ complete` in the logs on `docker stop`.
 
 ---
 
-## 6. NEXT
+## 6. DONE: first BFF tests
 
-- **BFF tests — the highest-value item left.** There are none; `typecheck` stands in. Two bugs
-  this week would have been caught instantly by one: the 429 surfacing as a 500, and the
-  cookie-signing throw the original audit found. Suggested minimum, via `fastify.inject`: OTP
-  happy path, wrong-code-exhausts-attempts, audience guard rejects a foreign session,
-  rate-limit trip, CSRF hook blocks cross-site. Roughly an hour.
+The BFFs had **no tests at all** — `typecheck` was standing in — so `nx test` covered only
+the Angular projects. Two bugs found this week would have been caught instantly by one of
+these (the 429 surfacing as a 500; the same latent flaw would have mis-reported a 413).
+
+**28 tests, all hermetic** — no Redis, no docker, no network. `libs/bff/core` and
+`apps/client-bff` each gained a `test` target (`jest.config.cts` + `tsconfig.spec.json`),
+taking `nx test` from 6 projects to 8.
+
+| Suite                          | Covers                                                                                                                                                                        |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `security.plugin.spec.ts`      | CSRF hook: blocks cross-site, **same-site** (the SameSite=lax gap) and foreign-Origin; allows same-origin, allows the header-less non-browser case, leaves safe methods alone |
+| `error-handler.plugin.spec.ts` | AppError mapping; 4xx passthrough with 429→`RATE_LIMITED`; plugin 5xx stays opaque; unknown errors never leak their message                                                   |
+| `require-session.spec.ts`      | The audience-isolation property — a dealer session is refused by every other audience                                                                                         |
+| `challenge-store.spec.ts`      | OTP: code never stored, per-challenge hash salting, single use, attempts destroy at 5, TTL set, challenges independent                                                        |
+
+`ioredis-mock` (devDependency) stands in for Redis so the OTP suite stays hermetic.
+
+**Note on the tsconfigs:** `tsconfig.lib.json` / `tsconfig.app.json` now `exclude`
+`src/**/*.spec.ts`. Without it the `typecheck` target compiles the specs without jest types
+and fails — specs are type-checked through `tsconfig.spec.json` instead.
+
+### Verified by mutation testing
+
+Passing tests prove nothing unless they can fail, so each was checked against a deliberately
+broken implementation. **All 8 mutations were caught**, and the suite went green again on
+restore:
+
+| Break introduced                           | Caught |
+| ------------------------------------------ | ------ |
+| audience guard always accepts              | ✅     |
+| error handler drops the 4xx passthrough    | ✅     |
+| CSRF stops checking `Sec-Fetch-Site`       | ✅     |
+| CSRF stops checking `Origin`               | ✅     |
+| OTP attempts limit raised 5 → 500          | ✅     |
+| OTP stored in plaintext alongside the hash | ✅     |
+| challenge not consumed on success (replay) | ✅     |
+| TTL removed from the challenge             | ✅     |
+
+---
+
+## 7. NEXT
+
+Nothing outstanding is blocking; everything below is deliberately deferred.
+
+- **Wider test coverage.** The suites above cover the security-critical logic. Not covered:
+  the OIDC login→callback round trip (needs an IdP stub or a mocked `openid-client`), and the
+  route wiring in each `main.ts`.
 - **Rate-limit keying is per-IP only.** A distributed flood at one address (many IPs, each
   under the limit) still mail-bombs that inbox. The fix is a second, email-keyed counter in
   the handler — `INCR`/`EXPIRE` on a hash of the normalised address. Normalise for
-  plus-addressing and Gmail dots or it's trivially bypassed. Deliberately deferred.
+  plus-addressing and Gmail dots or it's trivially bypassed.
 - **Close the tier-2 Entra gaps** when moving to a corporate tenant: disable self-service
-  sign-up, add app-assignment + app roles, then drop `defaultRoles`. Deliberately deferred —
-  the corporate tenant will be built from scratch anyway, and it's config-only.
+  sign-up, add app-assignment + app roles, then drop `defaultRoles`. The corporate tenant
+  will be built from scratch anyway, and it's config-only.
 - **BFF → ESL is unauthenticated**: identity is asserted in plain `X-User-*` headers and the
-  ESL trusts them. Deliberately out of POC scope — HMAC is an established in-house pattern
-  to apply at integration time.
-- **Rate-limit keying** is per-IP only. Keying `/api/auth/request` on the email as well would
-  stop one host burning through many addresses; needs a `preHandler` hook so the body is
-  parsed first.
+  ESL trusts them. Out of POC scope — HMAC is an established in-house pattern to apply at
+  integration time.
+- **Re-verify graceful shutdown** on the first containerised run (see §5) — it cannot be
+  exercised on Windows.
 - **CI** (out of POC scope — GoCD + devops conversation): the gate exists but nothing runs
   it automatically.
 
 ---
 
-## 7. Reference
+## 8. Reference
 
 - **Ports:** FE 4200/4201/4202/4203 · BFF 3001/3002/3003/3004 · Redis 6379 · ESL 8081.
 - **Gate:** `nx run-many -t lint test build typecheck` + `nx format:check`. Angular apps are
