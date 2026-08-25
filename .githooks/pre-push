@@ -1,0 +1,40 @@
+#!/bin/sh
+#
+# Pre-push gate.
+#
+# The repo has no CI pipeline yet (that is a GoCD/devops conversation), which
+# meant every check here — the theming contract, the Nx module boundaries, the
+# BFF tests — was only enforced when somebody remembered to run it. This closes
+# that gap locally: you cannot push a red tree by accident.
+#
+# Deliberately NOT running `build`: it is the long pole, and lint/test/typecheck
+# already cover correctness. Nx caches, so an unchanged tree replays instantly.
+#
+# Installed by the `prepare` script in package.json, which points
+# core.hooksPath at this directory. Bypass a single push with `--no-verify`.
+
+set -e
+
+NX="./node_modules/.bin/nx"
+if [ ! -x "$NX" ]; then
+  echo "pre-push: $NX not found — skipping (run an install first)."
+  exit 0
+fi
+
+echo "pre-push: running the gate (lint, test, typecheck, format) …"
+
+if ! "$NX" run-many -t lint test typecheck; then
+  echo ""
+  echo "pre-push: FAILED — lint/test/typecheck did not pass."
+  echo "          Fix the failures, or push with --no-verify to override."
+  exit 1
+fi
+
+if ! "$NX" format:check; then
+  echo ""
+  echo "pre-push: FAILED — formatting is not clean."
+  echo "          Run 'nx format:write', or push with --no-verify to override."
+  exit 1
+fi
+
+echo "pre-push: gate green."

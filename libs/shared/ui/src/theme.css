@@ -26,7 +26,7 @@
   --font-mono:
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
-  --radius: 0.625rem; /* THEMEABLE (tier 2) */
+  --radius: 0.625rem; /* THEMEABLE (tier 2): --radius */
 
   /* AIC BRAND PALETTE — verbatim from the brand document.
      Each state has an "outline" (strong line/icon/text) and a "filled"
@@ -92,7 +92,8 @@
   --popover: #ffffff;
   --popover-foreground: #2d2323;
 
-  /* THEMEABLE (tier 2). Primary is the AIC brand crimson #AF144B by default. */
+  /* THEMEABLE (tier 2): --primary, --primary-foreground.
+     Defaults to the AIC brand crimson #AF144B. */
   --primary: var(--aic-brand);
   --primary-foreground: var(--aic-brand-foreground);
 
@@ -122,7 +123,8 @@
   --sidebar-border: var(--aic-secondary-line);
   --sidebar-ring: var(--aic-focus);
 
-  /* THEMEABLE (tier 2). Portal identity — see the contract at the end of this file. */
+  /* THEMEABLE (tier 2): --app-accent, --app-accent-foreground.
+     Portal identity — see the contract at the end of this file. */
   --app-accent: var(--aic-brand);
   --app-accent-foreground: var(--aic-brand-foreground);
 }
@@ -164,7 +166,7 @@
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
 
-  /* THEMEABLE (tier 2). */
+  /* THEMEABLE (tier 2): --primary, --primary-foreground */
   --primary: var(--aic-brand);
   --primary-foreground: var(--aic-brand-foreground);
 
@@ -188,7 +190,7 @@
   --sidebar-border: var(--aic-secondary-line);
   --sidebar-ring: var(--aic-focus);
 
-  /* THEMEABLE (tier 2). Portal identity. */
+  /* THEMEABLE (tier 2): --app-accent, --app-accent-foreground */
   --app-accent: var(--aic-brand);
   --app-accent-foreground: var(--aic-brand-foreground);
 }
@@ -256,9 +258,9 @@
  * hex of its own — if a colour is needed and is not in this file, it goes
  * through design, not through an app stylesheet.
  *
- * Tier 2 — THEMEABLE BY AN APP. Exactly these (each is marked `THEMEABLE
- * (tier 2)` at its declaration above — they are NOT grouped together, because
- * --primary belongs beside --secondary/--muted and --radius beside layout):
+ * Tier 2 — THEMEABLE BY AN APP. Exactly these. Each is tagged at its own
+ * declaration above; they are deliberately NOT grouped, because --primary reads
+ * correctly beside --secondary/--muted and --radius beside layout:
  *
  *     --app-accent / --app-accent-foreground   portal identity
  *     --primary    / --primary-foreground      main action colour
@@ -282,10 +284,13 @@
  * dark-mode variant automatically — `--aic-brand` is #AF144B in light and
  * #D64B7C in dark, and the theme class never has to know.
  *
- * THIS CONTRACT IS ENFORCED, not just documented: see
- * libs/shared/ui/src/lib/theme/theming-contract.spec.ts, which fails the build
- * if an app's .theme-<app> block sets a token outside the list above, or uses a
- * raw colour instead of a var(--aic-*) reference.
+ * THIS CONTRACT IS ENFORCED, not just documented.
+ * lib/theme/theming-contract.ts holds the list as data; the tags above are
+ * parsed back out and compared against it, so adding a token in one place
+ * without the other fails the build. theming-contract.spec.ts additionally
+ * fails if an app's .theme-<app> block sets a token outside the list, assigns a
+ * raw colour instead of a var(--aic-*) reference, redefines the tier-1 palette,
+ * or does not apply its class to <body>.
  *
  * COMPONENTS consume semantic tokens only (bg-primary, border-info,
  * text-muted-foreground, bg-app-accent …) and never a raw hex or an `--aic-*`

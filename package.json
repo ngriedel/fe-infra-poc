@@ -17,7 +17,8 @@
     "typecheck": "nx run-many -t typecheck",
     "graph": "nx graph",
     "format": "nx format:write",
-    "format:check": "nx format:check"
+    "format:check": "nx format:check",
+    "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks')}catch(e){}\""
   },
   "devDependencies": {
     "@angular-devkit/core": "~21.2.0",

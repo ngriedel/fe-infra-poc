@@ -14,14 +14,9 @@ import { dirname, join } from 'node:path';
  *   - it must not redefine the tier-1 palette itself.
  */
 
-/** Tier 2 — the only tokens an app's theme block may declare. */
-const THEMEABLE = [
-  '--app-accent',
-  '--app-accent-foreground',
-  '--primary',
-  '--primary-foreground',
-  '--radius',
-] as const;
+import { THEMEABLE_TOKENS } from './theming-contract';
+
+const THEMEABLE: readonly string[] = THEMEABLE_TOKENS;
 
 const APPS = ['client', 'agent', 'dealer', 'broker'] as const;
 
@@ -68,7 +63,7 @@ describe('theming contract', () => {
     it('sets only themeable tokens', () => {
       const offenders = themeBlock(readApp(app), app)
         .map((d) => d.prop)
-        .filter((prop) => !THEMEABLE.includes(prop as (typeof THEMEABLE)[number]));
+        .filter((prop) => !THEMEABLE.includes(prop));
       expect(offenders).toEqual([]);
     });
 
@@ -92,13 +87,31 @@ describe('theming contract', () => {
     });
   });
 
-  it('keeps the documented contract in step with this test', () => {
+  /**
+   * The drift check, done properly.
+   *
+   * The previous version asserted only that each token name appeared SOMEWHERE
+   * in theme.css — a substring match that a passing mention in a comment
+   * satisfied, and which `--ring` would have satisfied on day one simply by
+   * existing as a declaration. This parses the `THEMEABLE (tier 2): …` tags out
+   * of the stylesheet and compares the two sets exactly, so a token added to the
+   * constant without being tagged (or tagged without being added) fails.
+   */
+  it('keeps the CSS tags and the exported constant in exact agreement', () => {
     const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
-    // Every themeable token must be named in the contract note...
-    for (const token of THEMEABLE) {
-      expect(theme).toContain(token);
+    const tagged = new Set<string>();
+    for (const tag of theme.matchAll(/THEMEABLE \(tier 2\):([^*]*)/g)) {
+      for (const token of (tag[1] ?? '').matchAll(/--[a-z0-9-]+/g)) tagged.add(token[0]);
     }
-    // ...and marked at its declaration, so a reader of the file sees it too.
-    expect(theme).toContain('THEMEABLE (tier 2)');
+
+    expect([...tagged].sort()).toEqual([...THEMEABLE].sort());
+  });
+
+  it('tags every themeable token at a real declaration, not just in prose', () => {
+    const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
+    for (const token of THEMEABLE) {
+      // e.g. "--primary:" must appear as an actual CSS declaration.
+      expect(theme).toMatch(new RegExp(`^\\s*${token}\\s*:`, 'm'));
+    }
   });
 });

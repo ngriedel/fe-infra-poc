@@ -12,7 +12,13 @@
       "options": {
         "jestConfig": "libs/shared/ui/jest.config.cts",
         "tsConfig": "libs/shared/ui/tsconfig.spec.json"
-      }
+      },
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/apps/*/src/styles.css",
+        "{workspaceRoot}/apps/*/src/index.html"
+      ]
     },
     "lint": {
       "executor": "@nx/eslint:lint"
