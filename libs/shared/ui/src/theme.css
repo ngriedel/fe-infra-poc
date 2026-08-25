@@ -36,6 +36,14 @@
   --aic-brand: #af144b;
   --aic-brand-foreground: #ffffff;
 
+  /* DERIVED, not in the brand document: a lighter tint of the brand, mixed with
+     white so it stays in the brand family rather than being an invented hue.
+     Exists only because the palette holds three usable warm/plum colours and
+     four portals need distinguishing (the logo red is reserved). Stored as a
+     literal for the same reason as the dark tints below. Replace if the brand
+     team supplies a fourth. */
+  --aic-brand-light: #d67a8b;
+
   /* Logo red. RESERVED for the logo — do not use as a UI colour. */
   --aic-logo: #dc0032;
   --aic-logo-foreground: #ffffff;
@@ -133,17 +141,22 @@
      colours are kept as-is (they read well on dark), and each pale surface is
      re-derived as that same accent mixed into the dark page background, which
      preserves the light-mode relationship rather than inventing new hues.
-     NEEDS BRAND SIGN-OFF. */
-  --aic-info-filled: color-mix(in oklab, var(--aic-info) 15%, var(--background));
-  --aic-error-filled: color-mix(in oklab, var(--aic-error) 15%, var(--background));
-  --aic-success-filled: color-mix(in oklab, var(--aic-success) 15%, var(--background));
-  --aic-warning-filled: color-mix(in oklab, var(--aic-warning) 15%, var(--background));
-  --aic-autofill: color-mix(in oklab, #faffbd 20%, var(--background));
+     Stored as literal hex, not a live color-mix(): the build emits a plain
+     fallback plus an @supports wrapper for color-mix, and that fallback would
+     render each tint at FULL strength as a surface on older browsers. The
+     values below are exactly what color-mix(in oklab, …) produces over the dark
+     background (#020618), computed once. NEEDS BRAND SIGN-OFF. */
+  --aic-info-filled: #051833; /* info @ 15% over the dark background */
+  --aic-error-filled: #1d1525; /* error @ 15% */
+  --aic-success-filled: #041d21; /* success @ 15% */
+  --aic-warning-filled: #1d1a22; /* warning @ 15% */
+  --aic-autofill: #252f37; /* autofill @ 20% */
   --aic-secondary-filled: oklch(0.279 0.041 260.031);
   --aic-secondary-helper: oklch(0.704 0.04 256.788);
   --aic-secondary-line: oklch(1 0 0 / 15%);
   /* Crimsons and the error red lifted for contrast against a dark background. */
   --aic-brand: #d64b7c;
+  --aic-brand-light: #ec93ac;
   --aic-focus: #d64b7c;
   --aic-step-selected: #c31856;
   --aic-error: #f26a6a;
@@ -196,6 +209,7 @@
  */
 @theme inline {
   --color-brand: var(--aic-brand);
+  --color-brand-light: var(--aic-brand-light);
   --color-brand-foreground: var(--aic-brand-foreground);
   --color-logo: var(--aic-logo);
   --color-logo-foreground: var(--aic-logo-foreground);

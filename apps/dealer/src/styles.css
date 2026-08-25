@@ -9,11 +9,11 @@
    so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
 @source '../../../libs/shared/ui/src';
 
-/* Portal accent: success green (#3BB719) from the shared AIC palette.
+/* Portal accent: orange (#FF9700).
    Only --app-accent is overridden — --primary and the rest stay universal, so
    the four portals are distinguishable without drifting off-brand. */
 :root,
 :root.dark {
-  --app-accent: var(--aic-success);
+  --app-accent: var(--aic-warning);
   --app-accent-foreground: #ffffff;
 }

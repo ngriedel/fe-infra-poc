@@ -479,9 +479,17 @@ pale `#FFF6F5` error surface is unchanged.
 
 **Still outstanding — dark mode is derived, not official.** The palette is light-mode: the
 "filled" tints are near-white and vanish on a dark page. Each pale surface is re-derived as
-its own accent mixed into the dark background with `color-mix()`, which preserves the
-light-mode relationship instead of inventing hues, and the crimsons plus the error red are
-lifted for contrast. Needs brand sign-off.
+its own accent over the dark background, preserving the light-mode relationship instead of
+inventing hues, and the crimsons plus the error red are lifted for contrast. Needs brand
+sign-off.
+
+**Derived values are stored as literal hex, not a live `color-mix()`.** The build (lightningcss)
+emits a plain fallback alongside an `@supports (color: color-mix(…))` wrapper, and that
+fallback resolves to the _un-mixed_ colour — which would render each subtle tint at full
+strength as a surface on a pre-2023 browser, and would make broker's accent identical to
+client's. The literals are exactly what `color-mix(in oklab, …)` produces, computed once.
+This is the same reasoning as preferring hex over HSL channels: store the value, keep it
+diffable, don't make the browser recompute it.
 
 ---
 
