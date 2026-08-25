@@ -1,10 +1,4 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  contentChild,
-  input,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, contentChild, input } from '@angular/core';
 import { FormField } from '@angular/forms/signals';
 import { HlmErrorComponent, type FieldErrorAccessor } from './hlm-error.component';
 import { HlmLabelDirective } from './hlm-label.directive';

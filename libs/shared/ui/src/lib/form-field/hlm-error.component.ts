@@ -22,7 +22,9 @@ export type FieldErrorAccessor = () => FieldErrorState;
   selector: 'hlm-error',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `<p [class]="classes()" [class.opacity-0]="!show()" aria-live="polite">{{ message() }}</p>`,
+  template: `<p [class]="classes()" [class.opacity-0]="!show()" aria-live="polite">
+    {{ message() }}
+  </p>`,
 })
 export class HlmErrorComponent {
   readonly field = input.required<FieldErrorAccessor>();

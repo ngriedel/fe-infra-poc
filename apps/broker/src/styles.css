@@ -9,11 +9,18 @@
    so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
 @source '../../../libs/shared/ui/src';
 
-/* Portal accent: light plum (derived tint of the brand).
-   Only --app-accent is overridden — --primary and the rest stay universal, so
-   the four portals are distinguishable without drifting off-brand. */
-:root,
-:root.dark {
-  --app-accent: var(--aic-brand-light);
-  --app-accent-foreground: #ffffff;
+/*
+ * broker portal theme.
+ *
+ * Applied as class="theme-broker" on <body> (see index.html). Only Tier-2
+ * themeable tokens are set, and only to values already in the shared palette —
+ * no new colours are introduced here. See the theming contract at the bottom of
+ * libs/shared/ui/src/theme.css.
+ *
+ * Assigning var(--aic-info) rather than #099EF3 means the dark-mode variant is
+ * inherited automatically; this class never needs a dark counterpart.
+ */
+.theme-broker {
+  --app-accent: var(--aic-info); /* blue */
+  --app-accent-foreground: var(--aic-brand-foreground);
 }

@@ -28,3 +28,9 @@ export {
   provideBrnButtonConfig,
   type BrnButtonConfig,
 } from './lib/button';
+
+// card
+export {
+  UiTransactionCard,
+  type TransactionStatus,
+} from './lib/card/ui-transaction-card.component';

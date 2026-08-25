@@ -36,14 +36,6 @@
   --aic-brand: #af144b;
   --aic-brand-foreground: #ffffff;
 
-  /* DERIVED, not in the brand document: a lighter tint of the brand, mixed with
-     white so it stays in the brand family rather than being an invented hue.
-     Exists only because the palette holds three usable warm/plum colours and
-     four portals need distinguishing (the logo red is reserved). Stored as a
-     literal for the same reason as the dark tints below. Replace if the brand
-     team supplies a fourth. */
-  --aic-brand-light: #d67a8b;
-
   /* Logo red. RESERVED for the logo — do not use as a UI colour. */
   --aic-logo: #dc0032;
   --aic-logo-foreground: #ffffff;
@@ -125,11 +117,9 @@
   --sidebar-border: var(--aic-secondary-line);
   --sidebar-ring: var(--aic-focus);
 
-  /* Per-app accent. The ONE token an app is expected to override, so the four
-     portals stay visually distinguishable while sharing a single brand palette.
-     Defaults to the brand primary; each app picks a different AIC colour. */
-  --app-accent: var(--primary);
-  --app-accent-foreground: var(--primary-foreground);
+  /* ── THEMEABLE (see the contract note at the bottom of this file) ────── */
+  --app-accent: var(--aic-brand);
+  --app-accent-foreground: var(--aic-brand-foreground);
 }
 
 :root.dark {
@@ -156,7 +146,6 @@
   --aic-secondary-line: oklch(1 0 0 / 15%);
   /* Crimsons and the error red lifted for contrast against a dark background. */
   --aic-brand: #d64b7c;
-  --aic-brand-light: #ec93ac;
   --aic-focus: #d64b7c;
   --aic-step-selected: #c31856;
   --aic-error: #f26a6a;
@@ -191,11 +180,9 @@
   --sidebar-border: var(--aic-secondary-line);
   --sidebar-ring: var(--aic-focus);
 
-  /* Per-app accent. The ONE token an app is expected to override, so the four
-     portals stay visually distinguishable while sharing a single brand palette.
-     Defaults to the brand primary; each app picks a different AIC colour. */
-  --app-accent: var(--primary);
-  --app-accent-foreground: var(--primary-foreground);
+  /* ── THEMEABLE ─────────────────────────────────────────────────────── */
+  --app-accent: var(--aic-brand);
+  --app-accent-foreground: var(--aic-brand-foreground);
 }
 
 /*
@@ -209,7 +196,6 @@
  */
 @theme inline {
   --color-brand: var(--aic-brand);
-  --color-brand-light: var(--aic-brand-light);
   --color-brand-foreground: var(--aic-brand-foreground);
   --color-logo: var(--aic-logo);
   --color-logo-foreground: var(--aic-logo-foreground);
@@ -246,3 +232,43 @@
     -webkit-text-fill-color: var(--foreground);
   }
 }
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * THEMING CONTRACT
+ *
+ * Tier 1 — OWNED BY DESIGN, LOCKED. Everything prefixed `--aic-*` is the Absa
+ * palette. Apps must NOT redefine these: a change here re-skins every app at
+ * once and is reviewed like a shared API change. Nor may an app introduce a raw
+ * hex of its own — if a colour is needed and is not in this file, it goes
+ * through design, not through an app stylesheet.
+ *
+ * Tier 2 — THEMEABLE BY AN APP. Exactly these:
+ *
+ *     --app-accent / --app-accent-foreground   portal identity
+ *     --primary    / --primary-foreground      main action colour
+ *     --radius                                 corner rounding
+ *
+ * An app themes by declaring a `.theme-<app>` class and applying it to <body>,
+ * assigning ONLY values drawn from the `--aic-*` palette above:
+ *
+ *     .theme-dealer { --app-accent: var(--aic-warning); }
+ *
+ * Two reasons for a class on <body> rather than `:root`:
+ *
+ *   1. Dark mode already occupies `:root.dark`, whose (0,2,0) specificity would
+ *      beat a `.theme-x` rule on the same element and silently drop the theme
+ *      in dark mode. A custom property set on a DESCENDANT wins for that
+ *      subtree by inheritance, no specificity contest.
+ *   2. It composes. Several themes can coexist on one page, and a theme can be
+ *      swapped at runtime by changing one class.
+ *
+ * Because a theme assigns `var(--aic-*)` rather than a literal, it inherits the
+ * dark-mode variant automatically — `--aic-brand` is #AF144B in light and
+ * #D64B7C in dark, and the theme class never has to know.
+ *
+ * COMPONENTS consume semantic tokens only (bg-primary, border-info,
+ * text-muted-foreground, bg-app-accent …) and never a raw hex or an `--aic-*`
+ * value directly, so re-theming never reaches component code.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
