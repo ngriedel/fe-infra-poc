@@ -82,6 +82,14 @@
           "buildTarget": "dealer-bff:build:production"
         }
       }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/dealer-bff/jest.config.cts",
+        "tsConfig": "apps/dealer-bff/tsconfig.spec.json"
+      }
     }
   },
   "tags": ["scope:dealer", "type:bff"]

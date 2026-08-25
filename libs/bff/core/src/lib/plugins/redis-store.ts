@@ -27,10 +27,23 @@ export class RedisSessionStore {
   }
 
   get(sessionId: string, callback: GetCallback): void {
-    this.redis.get(this.prefix + sessionId).then(
-      (raw) => callback(null, raw ? (JSON.parse(raw) as Session) : null),
-      (err) => callback(err),
-    );
+    const key = this.prefix + sessionId;
+    this.redis.get(key).then((raw) => {
+      if (!raw) return callback(null, null);
+      let parsed: Session;
+      try {
+        parsed = JSON.parse(raw) as Session;
+      } catch {
+        // A corrupt value must NOT take the server down. `JSON.parse` throwing
+        // here used to escape as an unhandled rejection and kill the process —
+        // and because the bad key survives a restart, every request carrying
+        // that cookie killed it again. Treat it as no session (the user simply
+        // signs in again) and drop the key so it can't recur.
+        this.redis.del(key).catch(() => undefined);
+        return callback(null, null);
+      }
+      callback(null, parsed);
+    }, callback);
   }
 
   destroy(sessionId: string, callback: ErrCallback): void {

@@ -12,10 +12,14 @@ Working handover for a fresh session. Read this + the linked docs, then start wi
 - **Shape:** 4 frontends + 4 BFFs + shared libs.
   - FE: `client` (4200), `agent` (4201), `dealer` (4202), `broker` (4203).
   - BFF: `client-bff` (3001), `agent-bff` (3002), `dealer-bff` (3003), `broker-bff` (3004).
-  - Libs: `bff/{core,contracts,auth-sso,esl-client}`, `shared/{ui,auth}`.
+  - Libs: `bff/{core,contracts,auth-sso,esl-client}`, `shared/{ui,auth}`, and
+    `{agent,dealer,broker}/contracts` — the per-audience BFF→FE policy views.
   - Infra (docker-compose): **Redis** (6379), **ESL stub** (8081), **Mailpit** (1025 SMTP / 8025 inbox).
 - **Deeper context (all current):**
   - [feature-overview.md](feature-overview.md) — app architecture.
+  - [bff-contracts.md](bff-contracts.md) — who owns a contract: why the policy schema is
+    per-audience, how the BFF projects the fat upstream record, and how Nx tags make the
+    boundary a build failure.
   - [auth-flow.md](auth-flow.md) — plain-English walkthrough of the whole login flow
     (browser → cookie → Redis → Entra → ESL). Start here if auth is unfamiliar.
   - [spartan-ui-architecture.md](spartan-ui-architecture.md) — UI (Tailwind v4 + Spartan 1.0 helm).
@@ -25,18 +29,19 @@ Working handover for a fresh session. Read this + the linked docs, then start wi
 
 ## 2. Current state (done + verified, committed on `azure`)
 
-| Area                                                                                                                                                           | State                             |
-| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| UI — Tailwind v4, canonical Spartan 1.0 helm, shared token theme, dark/light/system toggle                                                                     | ✅                                |
-| **Agent SSO** — real Entra **workforce** OIDC (openid-client v5, PKCE + nonce + id_token validation), audience isolation                                       | ✅ proven E2E in browser          |
-| Sessions — `@fastify/session` + **Redis** (opaque signed id, 8h TTL, `regenerate()` on login)                                                                  | ✅ verified                       |
-| Enterprise upstream slice — Spring Boot **ESL stub** (OpenAPI) → generated Zod client (`esl-client`) → agent-bff forwards identity → agent FE renders policies | ✅ verified E2E                   |
-| **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3) |
-| **client OTP tier** — Redis-backed challenges, HMAC-hashed codes, real mailer (Mailpit), rate-limited                                                          | ✅ verified E2E                   |
-| **BFF hardening** — CSRF header checks, rate limiting, `trustProxy`, `bodyLimit`, prod-safe logging, graceful shutdown                                         | ✅ verified (see §5)              |
-| **BFF tests** — 28 hermetic tests over the CSRF hook, error envelope, audience guard and OTP store; mutation-checked                                           | ✅ verified (see §6)              |
+| Area                                                                                                                                                           | State                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| UI — Tailwind v4, canonical Spartan 1.0 helm, shared token theme, dark/light/system toggle                                                                     | ✅                                                         |
+| **Agent SSO** — real Entra **workforce** OIDC (openid-client v5, PKCE + nonce + id_token validation), audience isolation                                       | ✅ proven E2E in browser                                   |
+| Sessions — `@fastify/session` + **Redis** (opaque signed id, 8h TTL, `regenerate()` on login)                                                                  | ✅ verified                                                |
+| Enterprise upstream slice — Spring Boot **ESL stub** (OpenAPI) → generated Zod client (`esl-client`) → agent-bff forwards identity → agent FE renders policies | ✅ verified E2E                                            |
+| **dealer/broker** — real Entra **External ID** (CIAM) email+password, audience isolation, ESL slice                                                            | ✅ proven E2E in browser (see §3)                          |
+| **client OTP tier** — Redis-backed challenges, HMAC-hashed codes, real mailer (Mailpit), rate-limited                                                          | ✅ verified E2E                                            |
+| **BFF hardening** — CSRF header checks, rate limiting, `trustProxy`, `bodyLimit`, prod-safe logging, graceful shutdown                                         | ✅ verified (see §5)                                       |
+| **Per-audience contracts** — ESL returns 24 fields; each BFF projects to its own FE contract, enforced by Nx scope tags                                        | ✅ verified E2E (see [bff-contracts.md](bff-contracts.md)) |
+| **BFF tests** — 28 hermetic tests over the CSRF hook, error envelope, audience guard and OTP store; mutation-checked                                           | ✅ verified (see §6)                                       |
 
-**Full gate is green:** `nx run-many -t lint test build typecheck` (16 projects, 37 tests across 8) + `nx format:check`.
+**Full gate is green:** `nx run-many -t lint test build typecheck` (19 projects, 45 tests across 9) + `nx format:check`.
 
 **Run it:** `docker compose up -d` (Redis + ESL + Mailpit), then `pnpm dev` (all 8 apps) or `nx serve <project>`.
 If `pnpm` isn't on PATH in a shell, use `corepack pnpm …` or `./node_modules/.bin/nx …`.

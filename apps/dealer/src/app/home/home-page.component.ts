@@ -3,7 +3,7 @@ import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
-import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
+import type { DealerPoliciesResponse, DealerPolicy } from '@aic/dealer/contracts';
 
 @Component({
   selector: 'dealer-home-page',
@@ -11,7 +11,7 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
   imports: [HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="container mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-8">
+    <main class="container mx-auto flex min-h-screen max-w-6xl flex-col gap-6 p-8">
       <header class="flex items-end justify-between">
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Dealer portal</p>
@@ -54,6 +54,11 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
                   <th class="px-3 py-2 text-left font-medium">Product</th>
                   <th class="px-3 py-2 text-left font-medium">Status</th>
                   <th class="px-3 py-2 text-right font-medium">Monthly</th>
+                  <th class="px-3 py-2 text-left font-medium">fieldF</th>
+                  <th class="px-3 py-2 text-left font-medium">fieldG</th>
+                  <th class="px-3 py-2 text-left font-medium">fieldH</th>
+                  <th class="px-3 py-2 text-left font-medium">fieldI</th>
+                  <th class="px-3 py-2 text-left font-medium">fieldJ</th>
                 </tr>
               </thead>
               <tbody>
@@ -63,10 +68,15 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
                     <td class="px-3 py-2">{{ p.product }}</td>
                     <td class="px-3 py-2">{{ p.status }}</td>
                     <td class="px-3 py-2 text-right">R{{ p.monthlyPremium }}</td>
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldF }}</td>
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldG }}</td>
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldH }}</td>
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldI }}</td>
+                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldJ }}</td>
                   </tr>
                 } @empty {
                   <tr>
-                    <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                    <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
                       No policies returned for this identity.
                     </td>
                   </tr>
@@ -85,7 +95,7 @@ export class HomePage {
   private readonly http = inject(HttpClient);
 
   /** `null` until the first fetch, so the table stays hidden on load. */
-  protected readonly policies = signal<Policy[] | null>(null);
+  protected readonly policies = signal<DealerPolicy[] | null>(null);
   protected readonly loading = signal(false);
   protected readonly error = signal<string | null>(null);
 
@@ -97,7 +107,7 @@ export class HomePage {
   protected fetchPolicies(): void {
     this.loading.set(true);
     this.error.set(null);
-    this.http.get<PoliciesResponse>('/api/policies').subscribe({
+    this.http.get<DealerPoliciesResponse>('/api/policies').subscribe({
       next: (res) => {
         this.policies.set(res.policies);
         this.loading.set(false);

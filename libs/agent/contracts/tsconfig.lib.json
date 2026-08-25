@@ -1,10 +1,8 @@
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
-    "outDir": "../../dist/out-tsc",
-    "module": "commonjs",
-    "moduleResolution": "node10",
-    "noPropertyAccessFromIndexSignature": false,
+    "outDir": "../../../dist/out-tsc",
+    "declaration": true,
     "types": ["node"]
   },
   "include": ["src/**/*.ts"],

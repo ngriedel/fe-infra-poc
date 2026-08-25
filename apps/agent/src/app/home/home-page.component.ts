@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { catchError, map, of } from 'rxjs';
 import { HlmButton } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
-import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
+import type { AgentPoliciesResponse, AgentPolicy } from '@aic/agent/contracts';
 
 @Component({
   selector: 'agent-home-page',
@@ -13,7 +13,7 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
   imports: [HlmButton],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <main class="container mx-auto flex min-h-screen max-w-4xl flex-col gap-6 p-8">
+    <main class="container mx-auto flex min-h-screen max-w-6xl flex-col gap-6 p-8">
       <header class="flex items-end justify-between">
         <div class="space-y-1">
           <p class="text-sm text-muted-foreground">Workbench</p>
@@ -37,6 +37,11 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
                 <th class="px-3 py-2 text-left font-medium">Product</th>
                 <th class="px-3 py-2 text-left font-medium">Status</th>
                 <th class="px-3 py-2 text-right font-medium">Monthly</th>
+                <th class="px-3 py-2 text-left font-medium">fieldA</th>
+                <th class="px-3 py-2 text-left font-medium">fieldB</th>
+                <th class="px-3 py-2 text-left font-medium">fieldC</th>
+                <th class="px-3 py-2 text-left font-medium">fieldD</th>
+                <th class="px-3 py-2 text-left font-medium">fieldE</th>
               </tr>
             </thead>
             <tbody>
@@ -46,10 +51,15 @@ import type { PoliciesResponse, Policy } from '@aic/bff/contracts';
                   <td class="px-3 py-2">{{ p.product }}</td>
                   <td class="px-3 py-2">{{ p.status }}</td>
                   <td class="px-3 py-2 text-right">R{{ p.monthlyPremium }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.fieldA }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.fieldB }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.fieldC }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.fieldD }}</td>
+                  <td class="px-3 py-2 font-mono text-xs">{{ p.fieldE }}</td>
                 </tr>
               } @empty {
                 <tr>
-                  <td colspan="4" class="px-3 py-6 text-center text-muted-foreground">
+                  <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
                     No policies.
                   </td>
                 </tr>
@@ -68,11 +78,11 @@ export class HomePage {
 
   /** Policies fetched from this app's BFF (same-origin via the dev proxy). */
   protected readonly policies = toSignal(
-    this.http.get<PoliciesResponse>('/api/policies').pipe(
+    this.http.get<AgentPoliciesResponse>('/api/policies').pipe(
       map((r) => r.policies),
-      catchError(() => of([] as Policy[])),
+      catchError(() => of([] as AgentPolicy[])),
     ),
-    { initialValue: [] as Policy[] },
+    { initialValue: [] as AgentPolicy[] },
   );
 
   async logout() {

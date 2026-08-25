@@ -1,0 +1,12 @@
+{
+  "name": "broker-contracts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/broker/contracts/src",
+  "projectType": "library",
+  "tags": ["scope:broker", "type:contracts"],
+  "targets": {
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"
+    }
+  }
+}

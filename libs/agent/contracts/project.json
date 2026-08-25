@@ -1,0 +1,12 @@
+{
+  "name": "agent-contracts",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/agent/contracts/src",
+  "projectType": "library",
+  "tags": ["scope:agent", "type:contracts"],
+  "targets": {
+    "typecheck": {
+      "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"
+    }
+  }
+}
