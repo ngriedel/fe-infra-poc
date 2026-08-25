@@ -23,4 +23,10 @@
 .theme-dealer {
   --app-accent: var(--aic-warning); /* orange */
   --app-accent-foreground: var(--aic-warning-foreground);
+
+  /* Buttons and other primary affordances follow the portal colour here.
+     Foreground is the MATCHING token, not white: white on #FF9700 is 2.17:1
+     and fails WCAG AA, while graphite is 7.03:1. */
+  --primary: var(--aic-warning);
+  --primary-foreground: var(--aic-warning-foreground);
 }
