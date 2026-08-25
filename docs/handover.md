@@ -17,6 +17,8 @@ Working handover for a fresh session. Read this + the linked docs, then start wi
   - Infra (docker-compose): **Redis** (6379), **ESL stub** (8081), **Mailpit** (1025 SMTP / 8025 inbox).
 - **Deeper context (all current):**
   - [feature-overview.md](feature-overview.md) — app architecture.
+  - [styling-guide.md](styling-guide.md) — onboarding for a new frontend dev: how to
+    style, theme and change look-and-feel. Start here before touching any CSS.
   - [bff-contracts.md](bff-contracts.md) — who owns a contract: why the policy schema is
     per-audience, how the BFF projects the fat upstream record, and how Nx tags make the
     boundary a build failure.
