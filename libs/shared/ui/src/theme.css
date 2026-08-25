@@ -1,11 +1,22 @@
 /*
- * Shared design tokens for all AIC frontends — Spartan "slate" base, OKLCH.
+ * Shared design tokens for all AIC frontends.
  *
- * Apps @import this once, then override ONLY their brand vars (e.g. --primary)
- * in their own styles.css. Components consume these via semantic utilities
- * (bg-primary, text-muted-foreground, rounded-md, …) — never raw palette colours
- * — so a re-brand or dark-mode swap never touches component code.
+ * Two layers live here:
+ *   1. The OFFICIAL AIC brand palette, transcribed verbatim from the brand
+ *      document (kept as hex so a reviewer can diff it against that doc
+ *      directly — the rest of the file is Spartan's OKLCH "slate" base).
+ *   2. Spartan/shadcn's semantic token set, with the AIC values mapped onto it
+ *      so existing components pick up the brand without touching component code.
+ *
+ * These are UNIVERSAL: every app consumes the same brand values. The single
+ * exception is --app-accent, which each portal overrides with one colour from
+ * this same palette so the four apps stay distinguishable at a glance.
+ *
+ * Components must consume semantic utilities (bg-primary, border-info,
+ * text-muted-foreground) and never raw hex, so a re-brand or a dark-mode swap
+ * never reaches component code.
  */
+
 :root {
   color-scheme: light;
 
@@ -16,36 +27,113 @@
     ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
 
   --radius: 0.625rem;
+
+  /* AIC BRAND PALETTE — verbatim from the brand document.
+     Each state has an "outline" (strong line/icon/text) and a "filled"
+     (pale surface tint). */
+
+  /* Elements / Focus */
+  --aic-focus: #af144b;
+
+  /* Elements / Auto-filled (browser autofill background) */
+  --aic-autofill: #faffbd;
+
+  /* Elements / Information */
+  --aic-info: #099ef3;
+  --aic-info-filled: #f5fbff;
+
+  /* Elements / Error */
+  --aic-error: #fed6c9;
+  --aic-error-filled: #fff6f5;
+
+  /* Elements / Success */
+  --aic-success: #3bb719;
+  --aic-success-filled: #f7fcf6;
+
+  /* Elements / Warning */
+  --aic-warning: #ff9700;
+  --aic-warning-filled: #fffbf5;
+
+  /* Secondary */
+  --aic-secondary-active: #b5b2b2;
+  --aic-secondary-helper: #524a4a;
+  --aic-secondary-filled: #f9f8f8;
+  --aic-secondary-line: #e3e2e2;
+
+  /* Step Indicator */
+  --aic-step-selected: #870a3c;
+  --aic-step-disabled: #cac7c7;
+
+  /* SEMANTIC TOKENS (Spartan/shadcn set).
+     Where the brand palette maps cleanly onto an existing token it is wired up
+     here, so every Spartan component inherits the brand for free. */
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.129 0.042 264.695);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
+
+  /* PROVISIONAL — the brand document's "Primary" section was not supplied (it
+     sits above the portion we have). Using the Step Indicator "Selected"
+     crimson so the brand is visible; replace when Primary is available. */
+  --primary: var(--aic-step-selected);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--aic-secondary-filled);
   --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
+  --muted: var(--aic-secondary-filled);
+  --muted-foreground: var(--aic-secondary-helper);
+  --accent: var(--aic-secondary-filled);
   --accent-foreground: oklch(0.208 0.042 265.755);
+
+  /* Deliberately NOT the brand error colour. shadcn uses --destructive as a
+     SOLID surface (destructive buttons); the brand's error outline (#FED6C9) is
+     a pale tint that would be unreadable as a button background. Use
+     border-error / bg-error-filled for the brand error treatment. */
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
+
+  --border: var(--aic-secondary-line);
+  --input: var(--aic-secondary-line);
+  --ring: var(--aic-focus);
+
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
+  --sidebar-primary: var(--aic-step-selected);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--aic-secondary-filled);
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  --sidebar-border: var(--aic-secondary-line);
+  --sidebar-ring: var(--aic-focus);
+
+  /* Per-app accent. The ONE token an app is expected to override, so the four
+     portals stay visually distinguishable while sharing a single brand palette.
+     Defaults to the brand primary; each app picks a different AIC colour. */
+  --app-accent: var(--primary);
+  --app-accent-foreground: var(--primary-foreground);
 }
 
 :root.dark {
   color-scheme: dark;
+
+  /* DERIVED, NOT OFFICIAL.
+     The brand document supplies one set of values and they are light-mode: the
+     "filled" tints are near-white and vanish on a dark page. The strong outline
+     colours are kept as-is (they read well on dark), and each pale surface is
+     re-derived as that same accent mixed into the dark page background, which
+     preserves the light-mode relationship rather than inventing new hues.
+     NEEDS BRAND SIGN-OFF. */
+  --aic-info-filled: color-mix(in oklab, var(--aic-info) 15%, var(--background));
+  --aic-error-filled: color-mix(in oklab, var(--aic-error) 15%, var(--background));
+  --aic-success-filled: color-mix(in oklab, var(--aic-success) 15%, var(--background));
+  --aic-warning-filled: color-mix(in oklab, var(--aic-warning) 15%, var(--background));
+  --aic-autofill: color-mix(in oklab, #faffbd 20%, var(--background));
+  --aic-secondary-filled: oklch(0.279 0.041 260.031);
+  --aic-secondary-helper: oklch(0.704 0.04 256.788);
+  --aic-secondary-line: oklch(1 0 0 / 15%);
+  /* Crimsons lifted for contrast against a dark background. */
+  --aic-focus: #d64b7c;
+  --aic-step-selected: #c31856;
 
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -53,26 +141,62 @@
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
+
+  --primary: var(--aic-step-selected);
+  --primary-foreground: #ffffff;
+
+  --secondary: var(--aic-secondary-filled);
   --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
+  --muted: var(--aic-secondary-filled);
+  --muted-foreground: var(--aic-secondary-helper);
+  --accent: var(--aic-secondary-filled);
   --accent-foreground: oklch(0.984 0.003 247.858);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
+  --border: var(--aic-secondary-line);
   --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
+  --ring: var(--aic-focus);
+
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.984 0.003 247.858);
-  --sidebar-primary-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
+  --sidebar-primary: var(--aic-step-selected);
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: var(--aic-secondary-filled);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  --sidebar-border: var(--aic-secondary-line);
+  --sidebar-ring: var(--aic-focus);
+
+  /* Per-app accent. The ONE token an app is expected to override, so the four
+     portals stay visually distinguishable while sharing a single brand palette.
+     Defaults to the brand primary; each app picks a different AIC colour. */
+  --app-accent: var(--primary);
+  --app-accent-foreground: var(--primary-foreground);
+}
+
+/*
+ * Register the AIC-specific families with Tailwind. Spartan's preset already
+ * registers the standard shadcn names; these are the ones it has no concept of
+ * (status states, step indicator, autofill), so they must be declared before
+ * `bg-success-filled`, `border-info` and friends exist as utilities.
+ *
+ * `inline` keeps each utility pointing at the var() rather than baking in the
+ * resolved value, which is what lets the dark-mode block above take effect.
+ */
+@theme inline {
+  --color-info: var(--aic-info);
+  --color-info-filled: var(--aic-info-filled);
+  --color-error: var(--aic-error);
+  --color-error-filled: var(--aic-error-filled);
+  --color-success: var(--aic-success);
+  --color-success-filled: var(--aic-success-filled);
+  --color-warning: var(--aic-warning);
+  --color-warning-filled: var(--aic-warning-filled);
+  --color-autofill: var(--aic-autofill);
+  --color-focus: var(--aic-focus);
+  --color-secondary-active: var(--aic-secondary-active);
+  --color-step-selected: var(--aic-step-selected);
+  --color-step-disabled: var(--aic-step-disabled);
+  --color-app-accent: var(--app-accent);
+  --color-app-accent-foreground: var(--app-accent-foreground);
 }
 
 @layer base {
@@ -81,5 +205,13 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  /* Brand autofill colour — browsers otherwise force their own yellow/blue. */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 1000px var(--aic-autofill) inset;
+    box-shadow: 0 0 0 1000px var(--aic-autofill) inset;
+    -webkit-text-fill-color: var(--foreground);
   }
 }

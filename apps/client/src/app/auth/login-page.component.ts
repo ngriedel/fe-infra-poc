@@ -78,7 +78,9 @@ import { AuthService } from './auth.service';
       }
 
       @if (error()) {
-        <p class="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">{{ error() }}</p>
+        <p class="rounded-md border border-error bg-error-filled px-3 py-2 text-sm text-foreground">
+          {{ error() }}
+        </p>
       }
 
       <p class="text-center text-xs text-muted-foreground">

@@ -405,3 +405,79 @@ Verified during research (workflow `wf_b3713cd2-69d`), primary sources:
   `dcastil/tailwind-merge` (v3 release notes, configuration).
 - Nx: nx.dev (enforce-module-boundaries). Angular: angular.dev
   (directive-composition-api, zoneless).
+
+---
+
+## AIC brand palette (added 2026-08-25)
+
+The official palette from the AIC brand document now lives in
+[libs/shared/ui/src/theme.css](../libs/shared/ui/src/theme.css), kept as **hex** so a
+reviewer can diff it against that document directly (the rest of the file is Spartan's
+OKLCH "slate" base).
+
+### Two layers
+
+**1. Raw brand values,** prefixed `--aic-*` and transcribed verbatim. Each status has an
+_outline_ (strong line/icon/text) and a _filled_ (pale surface tint):
+
+| Group          | Token(s)                                                                |
+| -------------- | ----------------------------------------------------------------------- |
+| Focus          | `--aic-focus` `#AF144B`                                                 |
+| Auto-filled    | `--aic-autofill` `#FAFFBD`                                              |
+| Information    | `--aic-info` `#099EF3` · `--aic-info-filled` `#F5FBFF`                  |
+| Error          | `--aic-error` `#FED6C9` · `--aic-error-filled` `#FFF6F5`                |
+| Success        | `--aic-success` `#3BB719` · `--aic-success-filled` `#F7FCF6`            |
+| Warning        | `--aic-warning` `#FF9700` · `--aic-warning-filled` `#FFFBF5`            |
+| Secondary      | active `#B5B2B2` · helper `#524A4A` · filled `#F9F8F8` · line `#E3E2E2` |
+| Step Indicator | selected `#870A3C` · disabled `#CAC7C7`                                 |
+
+**2. Mapped onto Spartan/shadcn semantics,** so existing components inherit the brand with
+no component-level changes:
+
+```
+--ring             <- --aic-focus            (focus rings are brand crimson)
+--border, --input  <- --aic-secondary-line
+--muted-foreground <- --aic-secondary-helper
+--muted, --secondary, --accent <- --aic-secondary-filled
+--primary          <- --aic-step-selected    (PROVISIONAL — see below)
+```
+
+The status families (information/success/warning/error) have no shadcn equivalent, so they
+are registered as new Tailwind colours in an `@theme inline` block: `border-info`,
+`bg-success-filled`, `text-warning` and so on. `inline` keeps each utility pointing at the
+`var()` rather than baking in a value, which is what lets dark mode re-point them.
+
+Autofill is applied for real, via a `:-webkit-autofill` box-shadow override — otherwise the
+browser forces its own yellow.
+
+### Per-app accent
+
+All four portals share the palette. The single token an app overrides is `--app-accent`,
+used for the strip across the top of the shell:
+
+| App    | Accent                | Hex       |
+| ------ | --------------------- | --------- |
+| client | step-selected crimson | `#870A3C` |
+| agent  | information blue      | `#099EF3` |
+| dealer | success green         | `#3BB719` |
+| broker | warning orange        | `#FF9700` |
+
+This replaces the old per-app `--primary` overrides (teal/violet/blue), which were invented
+colours rather than brand ones.
+
+### Three things needing sign-off
+
+1. **`--primary` is provisional.** The screenshots supplied start partway down the brand
+   document, at `## Elements`; the `## Primary` section above it wasn't included. The Step
+   Indicator "Selected" crimson `#870A3C` is standing in so the brand is visible. Replace it
+   once the top of the document is available.
+2. **Dark mode is derived, not official.** The palette is light-mode — the "filled" tints
+   are near-white and vanish on a dark page. Each pale surface is re-derived as its own
+   accent mixed into the dark background with `color-mix()`, which preserves the light-mode
+   relationship instead of inventing hues, and the two crimsons are lifted for contrast.
+3. **The Error "outline" looks inconsistent.** Information, Success and Warning outlines are
+   all strong, saturated colours; Error's is `#FED6C9`, a pale peach that reads as a tint
+   rather than a line. It is used exactly as specified, but worth confirming it isn't a
+   typo for a stronger red. Note `--destructive` (shadcn's _solid_ destructive-button
+   surface) was deliberately left on the Spartan red — `#FED6C9` would be unreadable as a
+   button background.

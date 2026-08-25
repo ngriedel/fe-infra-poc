@@ -39,7 +39,7 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic/dealer/contracts
 
         @if (error(); as message) {
           <p
-            class="rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs text-destructive"
+            class="rounded-md border border-error bg-error-filled px-3 py-2 text-xs text-foreground"
           >
             {{ message }}
           </p>

@@ -9,15 +9,11 @@
    so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
 @source '../../../libs/shared/ui/src';
 
-/* Dealer brand: a distinct teal primary marks the dealer portal —
-   demonstrates per-app theming layered over the shared token base. */
-:root {
-  --primary: oklch(0.52 0.11 175);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --ring: oklch(0.52 0.11 175);
-}
+/* Portal accent: success green (#3BB719) from the shared AIC palette.
+   Only --app-accent is overridden — --primary and the rest stay universal, so
+   the four portals are distinguishable without drifting off-brand. */
+:root,
 :root.dark {
-  --primary: oklch(0.72 0.1 175);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --ring: oklch(0.72 0.1 175);
+  --app-accent: var(--aic-success);
+  --app-accent-foreground: #ffffff;
 }
