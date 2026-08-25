@@ -48,6 +48,7 @@
 
   /* Elements / Information */
   --aic-info: #099ef3;
+  --aic-info-foreground: #2d2323; /* 5.23:1 — white would be 2.92, fails AA */
   --aic-info-filled: #f5fbff;
 
   /* Elements / Error.
@@ -57,14 +58,17 @@
      red is used instead. PROVISIONAL — replace with the official error red when
      the brand team confirms one. The pale #FFF6F5 surface below is unchanged. */
   --aic-error: #d32f2f;
+  --aic-error-foreground: #ffffff; /* 4.98:1 */
   --aic-error-filled: #fff6f5;
 
   /* Elements / Success */
   --aic-success: #3bb719;
+  --aic-success-foreground: #2d2323; /* 5.79:1 — white would be 2.63, fails AA */
   --aic-success-filled: #f7fcf6;
 
   /* Elements / Warning */
   --aic-warning: #ff9700;
+  --aic-warning-foreground: #2d2323; /* 7.03:1 — white would be 2.17, fails AA */
   --aic-warning-filled: #fffbf5;
 
   /* Secondary */
@@ -75,6 +79,7 @@
 
   /* Step Indicator */
   --aic-step-selected: #870a3c;
+  --aic-step-selected-foreground: #ffffff; /* 9.82:1 */
   --aic-step-disabled: #cac7c7;
 
   /* SEMANTIC TOKENS (Spartan/shadcn set).
@@ -122,7 +127,7 @@
   --app-accent-foreground: var(--aic-brand-foreground);
 }
 
-:root.dark {
+.dark {
   color-scheme: dark;
 
   /* DERIVED, NOT OFFICIAL.
@@ -148,7 +153,9 @@
   --aic-brand: #d64b7c;
   --aic-focus: #d64b7c;
   --aic-step-selected: #c31856;
+  --aic-step-selected-foreground: #ffffff; /* 5.86:1 */
   --aic-error: #f26a6a;
+  --aic-error-foreground: #2d2323; /* 5.12:1 — the lifted red needs dark text */
 
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -200,17 +207,22 @@
   --color-logo: var(--aic-logo);
   --color-logo-foreground: var(--aic-logo-foreground);
   --color-info: var(--aic-info);
+  --color-info-foreground: var(--aic-info-foreground);
   --color-info-filled: var(--aic-info-filled);
   --color-error: var(--aic-error);
+  --color-error-foreground: var(--aic-error-foreground);
   --color-error-filled: var(--aic-error-filled);
   --color-success: var(--aic-success);
+  --color-success-foreground: var(--aic-success-foreground);
   --color-success-filled: var(--aic-success-filled);
   --color-warning: var(--aic-warning);
+  --color-warning-foreground: var(--aic-warning-foreground);
   --color-warning-filled: var(--aic-warning-filled);
   --color-autofill: var(--aic-autofill);
   --color-focus: var(--aic-focus);
   --color-secondary-active: var(--aic-secondary-active);
   --color-step-selected: var(--aic-step-selected);
+  --color-step-selected-foreground: var(--aic-step-selected-foreground);
   --color-step-disabled: var(--aic-step-disabled);
   --color-app-accent: var(--app-accent);
   --color-app-accent-foreground: var(--app-accent-foreground);
@@ -256,7 +268,7 @@
  *
  * Two reasons for a class on <body> rather than `:root`:
  *
- *   1. Dark mode already occupies `:root.dark`, whose (0,2,0) specificity would
+ *   1. Dark mode already occupies `.dark`, whose (0,2,0) specificity would
  *      beat a `.theme-x` rule on the same element and silently drop the theme
  *      in dark mode. A custom property set on a DESCENDANT wins for that
  *      subtree by inheritance, no specificity contest.

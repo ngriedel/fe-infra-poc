@@ -4,7 +4,8 @@ import { ChangeDetectionStrategy, Component, computed, input } from '@angular/co
 export type TransactionStatus = 'success' | 'warning' | 'error' | 'info';
 
 /**
- * Status → utility classes.
+ * Status → badge utility classes (the palette's "filled" surface with its
+ * "outline" as the border).
  *
  * Written as complete literal strings rather than composed at runtime
  * (`border-${status}`), because Tailwind scans source text for class names and
@@ -14,11 +15,11 @@ export type TransactionStatus = 'success' | 'warning' | 'error' | 'info';
  * `--aic-*` value read directly — so re-theming or a dark-mode swap never
  * reaches this component.
  */
-const STATUS_CLASSES: Record<TransactionStatus, { accent: string; badge: string }> = {
-  success: { accent: 'bg-success', badge: 'bg-success-filled text-foreground border-success' },
-  warning: { accent: 'bg-warning', badge: 'bg-warning-filled text-foreground border-warning' },
-  error: { accent: 'bg-error', badge: 'bg-error-filled text-foreground border-error' },
-  info: { accent: 'bg-info', badge: 'bg-info-filled text-foreground border-info' },
+const STATUS_CLASSES: Record<TransactionStatus, string> = {
+  success: 'bg-success-filled text-foreground border-success',
+  warning: 'bg-warning-filled text-foreground border-warning',
+  error: 'bg-error-filled text-foreground border-error',
+  info: 'bg-info-filled text-foreground border-info',
 };
 
 /**
@@ -67,5 +68,5 @@ export class UiTransactionCard {
   readonly occurredOn = input('');
   readonly status = input<TransactionStatus>('info');
 
-  protected readonly badgeClass = computed(() => STATUS_CLASSES[this.status()].badge);
+  protected readonly badgeClass = computed(() => STATUS_CLASSES[this.status()]);
 }

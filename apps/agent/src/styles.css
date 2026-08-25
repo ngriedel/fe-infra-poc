@@ -22,5 +22,5 @@
  */
 .theme-agent {
   --app-accent: var(--aic-step-selected); /* dark plum */
-  --app-accent-foreground: var(--aic-brand-foreground);
+  --app-accent-foreground: var(--aic-step-selected-foreground);
 }

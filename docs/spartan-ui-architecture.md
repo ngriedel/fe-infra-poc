@@ -533,3 +533,61 @@ pattern and is worth adopting if a single app ever needs to host more than one t
 once, or switch theme at runtime. It is not needed yet: each app here is one theme, so the
 accent is set once on `:root`. The token indirection means moving to `.theme-*` later is a
 selector change, not a re-architecture.
+
+---
+
+## Is this the canonical approach? (verified 2026-08-25)
+
+Checked against the Tailwind v4 docs and the Spartan theming docs rather than assumed.
+
+### Confirmed correct
+
+**`@theme inline` for tokens that reference other variables.** Spartan documents exactly this
+shape — `@theme inline { --color-warning: var(--warning); }` — and it is what we use.
+
+It turns out to be **required**, not merely preferred. Tailwind's [theme docs](https://tailwindcss.com/docs/theme)
+explain that plain `@theme` makes the utility reference the theme variable, which CSS then
+resolves **where that variable was defined** — at `:root`. A `.theme-<app>` class on a
+descendant would therefore be ignored. `@theme inline` substitutes the value, so the utility
+emits `background-color: var(--app-accent)` and resolves at the element. Confirmed in our own
+compiled CSS.
+
+A widely-shared blog post claims `@theme inline` "bakes values at build time and breaks dark
+mode". That is only true when the value is a **literal**; with a `var()` reference — which is
+the documented pattern and ours — the reference is what gets inlined, and dark mode works.
+
+**Custom semantic colours as `--x` + `--x-foreground` pairs, registered via `@theme inline`.**
+Spartan's documented example for adding a `warning` colour. Ours follow it.
+
+**Components consuming semantic tokens only.** `HlmButton` already did; `ui-transaction-card`
+was written to the same rule.
+
+### Fixed as a result of this check
+
+1. **Dark selector aligned.** Spartan documents `.dark { … }`; we had `:root.dark`. Now `.dark`.
+   (The `<body>` theme class still wins by inheritance, so the reasoning below is unaffected.)
+2. **Missing `-foreground` pairs added** for info/success/warning/error/step-selected — Spartan's
+   convention includes them and we had none, so a component had no defined text colour on a
+   solid status surface.
+3. **Accent foregrounds were wrong.** Every theme paired its accent with white. Measured
+   against WCAG: white on dealer's orange is **2.17:1** and on broker's blue **2.92:1** — both
+   fail AA. Each theme now pairs with its matching `-foreground` token (graphite on
+   info/success/warning, white on brand/plum/error). No live bug, since the accent currently
+   renders as a text-free rule, but the token was wrong and would have failed the first time
+   anything put a label on it.
+
+### Deliberate divergences
+
+**Colour format.** Spartan uses OKLCH exclusively. The `--aic-*` layer is hex, because the
+brand document is hex and keeping it diffable against that document matters more here than
+matching Spartan's house style. Functionally identical — Tailwind v4 accepts any format, and
+opacity modifiers work via `color-mix()` regardless (verified). Worth revisiting if the design
+team ever publishes OKLCH values.
+
+**Two token layers.** Spartan has one (`--primary` → `--color-primary`); we have
+`--aic-brand` → `--primary` → `--color-primary`. The extra layer is what makes "locked palette
+vs themeable token" expressible, which was a stated requirement. It costs one indirection.
+
+**Multiple themes via a wrapper class.** Spartan's docs cover light/dark only. The
+`.theme-<app>` pattern comes from the wider shadcn ecosystem, is plain CSS, and is what the
+Absa DSP example itself used (`.theme-agent`).
