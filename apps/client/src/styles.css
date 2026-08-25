@@ -9,11 +9,11 @@
    so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
 @source '../../../libs/shared/ui/src';
 
-/* Portal accent: deep crimson, the house colour (#870A3C) from the shared AIC palette.
+/* Portal accent: brand crimson (#AF144B), the house colour from the shared AIC palette.
    Only --app-accent is overridden — --primary and the rest stay universal, so
    the four portals are distinguishable without drifting off-brand. */
 :root,
 :root.dark {
-  --app-accent: var(--aic-step-selected);
+  --app-accent: var(--aic-brand);
   --app-accent-foreground: #ffffff;
 }

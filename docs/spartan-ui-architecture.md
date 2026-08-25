@@ -465,19 +465,63 @@ used for the strip across the top of the shell:
 This replaces the old per-app `--primary` overrides (teal/violet/blue), which were invented
 colours rather than brand ones.
 
-### Three things needing sign-off
+### Confirmed and outstanding
 
-1. **`--primary` is provisional.** The screenshots supplied start partway down the brand
-   document, at `## Elements`; the `## Primary` section above it wasn't included. The Step
-   Indicator "Selected" crimson `#870A3C` is standing in so the brand is visible. Replace it
-   once the top of the document is available.
-2. **Dark mode is derived, not official.** The palette is light-mode — the "filled" tints
-   are near-white and vanish on a dark page. Each pale surface is re-derived as its own
-   accent mixed into the dark background with `color-mix()`, which preserves the light-mode
-   relationship instead of inventing hues, and the two crimsons are lifted for contrast.
-3. **The Error "outline" looks inconsistent.** Information, Success and Warning outlines are
-   all strong, saturated colours; Error's is `#FED6C9`, a pale peach that reads as a tint
-   rather than a line. It is used exactly as specified, but worth confirming it isn't a
-   typo for a stronger red. Note `--destructive` (shadcn's _solid_ destructive-button
-   surface) was deliberately left on the Spartan red — `#FED6C9` would be unreadable as a
-   button background.
+**Confirmed.** `--primary` is the AIC brand crimson `#AF144B`. The DSP base also gave us
+the logo red `#DC0032` (declared as `--aic-logo`, **reserved for the logo, not a UI
+colour**), white background, and graphite-black foreground `#2D2323`.
+
+**Changed on instruction.** The brand document lists the Error _outline_ as `#FED6C9`, a
+pale peach. Every other status outline is a strong saturated colour and a peach line does
+not read as an error, so `--aic-error` is now `#D32F2F`. That specific red is
+**provisional** — swap it for the official error red when the brand team confirms one. The
+pale `#FFF6F5` error surface is unchanged.
+
+**Still outstanding — dark mode is derived, not official.** The palette is light-mode: the
+"filled" tints are near-white and vanish on a dark page. Each pale surface is re-derived as
+its own accent mixed into the dark background with `color-mix()`, which preserves the
+light-mode relationship instead of inventing hues, and the crimsons plus the error red are
+lifted for contrast. Needs brand sign-off.
+
+---
+
+## Why this is CSS-first, not a Tailwind preset
+
+A Tailwind **preset** (`Partial<Config>` with `theme.extend.colors`) plus **bare HSL
+channel** tokens (`--brand: 338.7 79.5% 38.2%`) is the correct shadcn pattern **for
+Tailwind v3**. This repo is on **v4.3.2**, where that shape is either removed or no longer
+buys anything:
+
+| v3 pattern                                | Status in v4                                                              |
+| ----------------------------------------- | ------------------------------------------------------------------------- |
+| `@tailwind base/components/utilities`     | Replaced by `@import "tailwindcss"`                                       |
+| JS config `theme.extend.colors`           | Replaced by the CSS `@theme` directive                                    |
+| `container: { center, padding, screens }` | Options removed; use `@utility container`                                 |
+| `darkMode: 'class'`                       | Replaced by `@custom-variant dark` (Spartan's preset already declares it) |
+| Bare HSL channels for `/alpha`            | Unnecessary — see below                                                   |
+
+The bare-channel trick existed because v3 needed `hsl(var(--x) / <alpha-value>)` for opacity
+modifiers to work. v4 composes alpha with `color-mix()` instead, so it works on any full
+colour value. Verified in this repo's own compiled CSS — `outline-ring/50`, where `--ring`
+resolves to the plain hex `#af144b`, emits:
+
+```css
+outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
+```
+
+So splitting colours into channels costs readability and gains nothing. It also introduces a
+conversion step that can drift: the DSP base carries a `TODO - check all HSL value
+conversions`, and indeed `#2D2323` is listed as `0 13.6% 15.7%` where the true saturation is
+`12.5%`. Storing `#2D2323` removes that class of bug entirely, and keeps the file diffable
+against the brand document.
+
+**What was worth borrowing from the DSP base, and has been:** a single company-wide token
+file as the source of truth; brand and logo as first-class named tokens with the logo
+explicitly reserved; `-foreground` pairs; provenance in the file header; and apps
+overriding tokens _after_ the import rather than redefining them.
+
+**Class-based theming** (`.theme-agent { --primary: … }`) is a genuinely good v4-compatible
+pattern and is worth adopting if a single app ever needs to host more than one theme at
+once, or switch theme at runtime. It is not needed yet: each app here is one theme, so the
+accent is set once on `:root`. The token indirection means moving to `.theme-*` later is a
+selector change, not a re-architecture.

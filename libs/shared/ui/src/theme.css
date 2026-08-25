@@ -32,6 +32,14 @@
      Each state has an "outline" (strong line/icon/text) and a "filled"
      (pale surface tint). */
 
+  /* Brand — the AIC brand colour (top bar / brand surfaces). */
+  --aic-brand: #af144b;
+  --aic-brand-foreground: #ffffff;
+
+  /* Logo red. RESERVED for the logo — do not use as a UI colour. */
+  --aic-logo: #dc0032;
+  --aic-logo-foreground: #ffffff;
+
   /* Elements / Focus */
   --aic-focus: #af144b;
 
@@ -42,8 +50,13 @@
   --aic-info: #099ef3;
   --aic-info-filled: #f5fbff;
 
-  /* Elements / Error */
-  --aic-error: #fed6c9;
+  /* Elements / Error.
+     NOTE: the brand document lists the error OUTLINE as #FED6C9, a pale peach.
+     Every other status outline (info/success/warning) is a strong saturated
+     colour, and a peach line is unreadable as an error affordance, so a proper
+     red is used instead. PROVISIONAL — replace with the official error red when
+     the brand team confirms one. The pale #FFF6F5 surface below is unchanged. */
+  --aic-error: #d32f2f;
   --aic-error-filled: #fff6f5;
 
   /* Elements / Success */
@@ -67,18 +80,16 @@
   /* SEMANTIC TOKENS (Spartan/shadcn set).
      Where the brand palette maps cleanly onto an existing token it is wired up
      here, so every Spartan component inherits the brand for free. */
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
+  --background: #ffffff; /* White */
+  --foreground: #2d2323; /* Graphite black */
+  --card: #ffffff;
+  --card-foreground: #2d2323;
+  --popover: #ffffff;
+  --popover-foreground: #2d2323;
 
-  /* PROVISIONAL — the brand document's "Primary" section was not supplied (it
-     sits above the portion we have). Using the Step Indicator "Selected"
-     crimson so the brand is visible; replace when Primary is available. */
-  --primary: var(--aic-step-selected);
-  --primary-foreground: #ffffff;
+  /* Confirmed: primary is the AIC brand crimson #AF144B. */
+  --primary: var(--aic-brand);
+  --primary-foreground: var(--aic-brand-foreground);
 
   --secondary: var(--aic-secondary-filled);
   --secondary-foreground: oklch(0.208 0.042 265.755);
@@ -99,8 +110,8 @@
 
   --sidebar: oklch(0.984 0.003 247.858);
   --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: var(--aic-step-selected);
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: var(--aic-brand);
+  --sidebar-primary-foreground: var(--aic-brand-foreground);
   --sidebar-accent: var(--aic-secondary-filled);
   --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
   --sidebar-border: var(--aic-secondary-line);
@@ -131,9 +142,11 @@
   --aic-secondary-filled: oklch(0.279 0.041 260.031);
   --aic-secondary-helper: oklch(0.704 0.04 256.788);
   --aic-secondary-line: oklch(1 0 0 / 15%);
-  /* Crimsons lifted for contrast against a dark background. */
+  /* Crimsons and the error red lifted for contrast against a dark background. */
+  --aic-brand: #d64b7c;
   --aic-focus: #d64b7c;
   --aic-step-selected: #c31856;
+  --aic-error: #f26a6a;
 
   --background: oklch(0.129 0.042 264.695);
   --foreground: oklch(0.984 0.003 247.858);
@@ -142,8 +155,8 @@
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
 
-  --primary: var(--aic-step-selected);
-  --primary-foreground: #ffffff;
+  --primary: var(--aic-brand);
+  --primary-foreground: var(--aic-brand-foreground);
 
   --secondary: var(--aic-secondary-filled);
   --secondary-foreground: oklch(0.984 0.003 247.858);
@@ -158,8 +171,8 @@
 
   --sidebar: oklch(0.208 0.042 265.755);
   --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: var(--aic-step-selected);
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary: var(--aic-brand);
+  --sidebar-primary-foreground: var(--aic-brand-foreground);
   --sidebar-accent: var(--aic-secondary-filled);
   --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
   --sidebar-border: var(--aic-secondary-line);
@@ -182,6 +195,10 @@
  * resolved value, which is what lets the dark-mode block above take effect.
  */
 @theme inline {
+  --color-brand: var(--aic-brand);
+  --color-brand-foreground: var(--aic-brand-foreground);
+  --color-logo: var(--aic-logo);
+  --color-logo-foreground: var(--aic-logo-foreground);
   --color-info: var(--aic-info);
   --color-info-filled: var(--aic-info-filled);
   --color-error: var(--aic-error);
