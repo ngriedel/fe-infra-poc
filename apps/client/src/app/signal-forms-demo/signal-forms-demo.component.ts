@@ -18,8 +18,8 @@ import {
   HlmButton,
   HlmErrorComponent,
   HlmFormFieldComponent,
-  HlmInputDirective,
-  HlmLabelDirective,
+  HlmInput,
+  HlmLabel,
   numberMask,
 } from '@aic/shared/ui';
 import {
@@ -72,8 +72,8 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
     MaskitoDirective,
     HlmButton,
     HlmFormFieldComponent,
-    HlmInputDirective,
-    HlmLabelDirective,
+    HlmInput,
+    HlmLabel,
     HlmErrorComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -15,3 +15,9 @@ export * from './lib/card';
 
 // table (canonical Spartan helm — generated; styling-only, no brain counterpart)
 export * from './lib/table';
+
+// input (canonical Spartan helm — generated)
+export * from './lib/input';
+
+// label (canonical Spartan helm — generated)
+export * from './lib/label';

@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, computed, contentChild, input } from '@angular/core';
 import { FormField } from '@angular/forms/signals';
 import { HlmErrorComponent, type FieldErrorAccessor } from './hlm-error.component';
-import { HlmLabelDirective } from './hlm-label.directive';
+import { HlmLabel } from '../label';
 
 /**
  * Wraps a single form control with its label and error message, removing the
@@ -22,7 +22,7 @@ import { HlmLabelDirective } from './hlm-label.directive';
 @Component({
   selector: 'hlm-form-field',
   standalone: true,
-  imports: [HlmErrorComponent, HlmLabelDirective],
+  imports: [HlmErrorComponent, HlmLabel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   host: { class: 'block' },
   template: `

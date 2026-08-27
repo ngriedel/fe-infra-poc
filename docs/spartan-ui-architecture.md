@@ -355,10 +355,30 @@ Rules that keep composites clean:
 
 Our `HlmFormFieldComponent` is Signal-Forms-aware (auto-derives error state from
 the projected control). That's genuine domain value → it's a legitimate
-**composite** and stays. But it will be **rebuilt to compose the CLI-generated
-helm `input`/`label`/`error` primitives**, instead of the current hand-rolled
-ones. That's the promotion rule in practice: keep the smart wrapper, own the
-primitives canonically underneath.
+**composite** and stays. **Done (2026-08-27):** it now composes the CLI-generated
+`input` and `label`, and the hand-rolled `HlmInputDirective` /
+`HlmLabelDirective` are deleted. That's the promotion rule in practice: keep the
+smart wrapper, own the primitives canonically underneath.
+
+The hand-rolled input was not merely unstyled-by-CLI — it skipped **brain**
+entirely, so it lost `BrnInput` (id generation, `aria-invalid`,
+`data-touched`/`data-dirty`/`data-matches-spartan-invalid`) and
+`BrnFieldControlDescribedBy` (wiring `aria-describedby` to the error message).
+It also carried a **second focus-ring design** — `ring-2 ring-offset-2` against
+vega's `focus-visible:border-ring ring-ring/50 ring-3` — so the shared library
+shipped two focus treatments side by side.
+
+The Signal Forms behaviour survived the swap without a bridge, which was the part
+worth checking. `BrnFieldControl` reads `NgControl`, and Angular's Signal Forms
+supply `InteropNgControl`, whose `dirty`/`touched`/`invalid` getters read the
+`FormField` signals — so a `computed()` in brain picks them up reactively (brain
+documents this in `spartan-ng-brain-forms.mjs`). Brain's default
+`ErrorStateMatcher` is `invalid && (touched || submitted)`, which matches what
+the hand-rolled directive computed, plus a submitted-form case. Nothing at the
+call site changed: `<input hlmInput [formField]="form.email" />` still works.
+
+Removed from the public API with it: `HlmInputDirective`, `HlmLabelDirective`
+and `inputVariants` — the last had no consumer outside the directive it lived in.
 
 ---
 
@@ -405,10 +425,16 @@ Executed as a **thin vertical slice first** (button), then breadth.
 - Delete the hand-rolled directive; update the showcase; add specs (variant→class,
   override-wins, `<a hlmBtn disabled>` now blocks).
 
-**Phase 3 — Form stack**
+**Phase 3 — Form stack** — `input`/`label` **done (2026-08-27)**
 
-- Generate helm `input`/`label`/`form-field` primitives via CLI.
-- Rebuild `HlmFormField` composite over them; migrate icon usage to `@ng-icons`.
+- ~~Generate helm `input`/`label` primitives via CLI.~~ Done, via
+  `pnpm spartan:add`. See [Worked example: the form-field](#worked-example-the-form-field).
+- ~~Rebuild `HlmFormField` composite over them.~~ Done.
+- Still open: the `field` primitive family (11 files — `FieldSet`, `FieldGroup`,
+  `FieldLabel`, `FieldError`, …) was **not** adopted. It would replace
+  `HlmFormFieldComponent` and `HlmErrorComponent` wholesale rather than compose
+  with them, so it is its own decision, not a continuation of this one.
+- Still open: migrate icon usage to `@ng-icons`.
 
 **Phase 4 — Tokens, branding, pipeline**
 
