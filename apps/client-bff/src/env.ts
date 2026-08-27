@@ -1,5 +1,5 @@
 import { loadEnv } from '@aic/bff/core';
-import { z } from 'zod';
+import * as z from 'zod';
 
 const rawEnv = loadEnv({
   /** SMTP host for OTP mail. Dev default is the Mailpit docker-compose service. */

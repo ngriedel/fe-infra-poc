@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 /**
  * The AGENT view of a policy — the contract between `agent-bff` and the `agent`

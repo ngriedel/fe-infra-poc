@@ -1,5 +1,5 @@
 import { loadEnv } from '@aic/bff/core';
-import { z } from 'zod';
+import * as z from 'zod';
 
 const rawEnv = loadEnv({
   OIDC_MODE: z.enum(['stub', 'azure']).default('stub'),

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+import * as z from 'zod';
 
 /**
  * The DEALER view of a policy — the contract between `dealer-bff` and the

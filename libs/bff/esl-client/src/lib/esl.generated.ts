@@ -1,5 +1,5 @@
 import { makeApi, Zodios, type ZodiosOptions } from '@zodios/core';
-import { z } from 'zod';
+import * as z from 'zod';
 
 const Policy = z
   .object({

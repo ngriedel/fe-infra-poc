@@ -75,6 +75,41 @@ export default [
     ],
     // Override or add rules here
     rules: {
+      // Zod import hygiene, enforced because both mistakes are invisible at review.
+      //
+      // `import { z } from 'zod'` pulls in a materialized namespace object that
+      // defeats tree-shaking and retains all 53 locale files. Measured in this
+      // repo on a route that validates at runtime: 55.47 kB gzip vs 18.98 kB for
+      // the namespace form — same schema, same call site, only the import line.
+      // `import * as z from 'zod'` is the form Zod's own docs use.
+      //
+      // `zod/mini` is banned outright for now. It saves ~13 kB gzip on top, but
+      // a mini schema's .parse() throws core `$ZodError`, which is NOT
+      // `instanceof` the classic `ZodError` that libs/bff/core's error handler
+      // branches on — so adopting it silently converts 400s into 500s. Revisit
+      // only alongside that handler.
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector:
+            "ImportDeclaration[source.value='zod'][importKind!='type'] > ImportSpecifier[imported.name='z'][importKind!='type']",
+          message:
+            "Use `import * as z from 'zod'` — the named `z` export defeats tree-shaking (+36 kB gzip on a runtime-validating route).",
+        },
+      ],
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: 'zod/mini',
+              message:
+                'zod/mini is not adopted: its $ZodError is not instanceof ZodError, so the BFF error handler would turn 400s into 500s. See docs/direction-review.md.',
+            },
+          ],
+        },
+      ],
+
       // Allow intentionally-unused, underscore-prefixed args/vars/caught-errors
       // (e.g. Fastify preHandler `_reply`, interface-conformance `_returnTo`).
       '@typescript-eslint/no-unused-vars': [
