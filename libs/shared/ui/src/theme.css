@@ -151,9 +151,16 @@
   --aic-secondary-filled: oklch(0.279 0.041 260.031);
   --aic-secondary-helper: oklch(0.704 0.04 256.788);
   --aic-secondary-line: oklch(1 0 0 / 15%);
-  /* Crimsons and the error red lifted for contrast against a dark background. */
-  --aic-brand: #d64b7c;
-  --aic-focus: #d64b7c;
+  /* Crimsons and the error red lifted for contrast against a dark background.
+     The brand lift is bounded at BOTH ends, which is easy to miss: lift it far
+     enough and white text fails, not far enough and graphite text fails. The
+     previous #D64B7C sat in the gap between the two — 4.07:1 on white and
+     3.75:1 on graphite, so neither of the palette's two foregrounds passed AA.
+     #C93F72 is the same Oklab hue and chroma, lightness 0.58, which restores
+     white text while staying lifted above the light-mode #AF144B (L 0.497). */
+  --aic-brand: #c93f72;
+  --aic-brand-foreground: #ffffff; /* 4.73:1 — see the note above before changing either */
+  --aic-focus: #c93f72; /* kept equal to --aic-brand, as in light mode */
   --aic-step-selected: #c31856;
   --aic-step-selected-foreground: #ffffff; /* 5.86:1 */
   --aic-error: #f26a6a;
@@ -201,8 +208,12 @@
  * (status states, step indicator, autofill), so they must be declared before
  * `bg-success-filled`, `border-info` and friends exist as utilities.
  *
- * `inline` keeps each utility pointing at the var() rather than baking in the
- * resolved value, which is what lets the dark-mode block above take effect.
+ * `inline` substitutes the theme variable's VALUE into the utility. Because
+ * every value here is itself a `var(--aic-*)` reference, what gets substituted
+ * is the reference — so `bg-info` emits `var(--aic-info)` and resolves at the
+ * element. Without `inline` the utility would reference `--color-info`, which
+ * CSS resolves where it was declared (`:root`), so a `.dark` or `.theme-x`
+ * override on a descendant would never be seen.
  */
 @theme inline {
   --color-brand: var(--aic-brand);
@@ -273,16 +284,17 @@
  *
  * Two reasons for a class on <body> rather than `:root`:
  *
- *   1. Dark mode already occupies `.dark`, whose (0,2,0) specificity would
- *      beat a `.theme-x` rule on the same element and silently drop the theme
- *      in dark mode. A custom property set on a DESCENDANT wins for that
- *      subtree by inheritance, no specificity contest.
+ *   1. Dark mode already occupies `.dark`. Putting `.theme-x` on the same
+ *      element would make the two compete: both are single classes (0,1,0), so
+ *      the winner would come down to source order — silently, and differently
+ *      per token. A custom property set on a DESCENDANT wins for that subtree
+ *      by inheritance instead, with no specificity contest at all.
  *   2. It composes. Several themes can coexist on one page, and a theme can be
  *      swapped at runtime by changing one class.
  *
  * Because a theme assigns `var(--aic-*)` rather than a literal, it inherits the
  * dark-mode variant automatically — `--aic-brand` is #AF144B in light and
- * #D64B7C in dark, and the theme class never has to know.
+ * #C93F72 in dark, and the theme class never has to know.
  *
  * THIS CONTRACT IS ENFORCED, not just documented.
  * lib/theme/theming-contract.ts holds the list as data; the tags above are

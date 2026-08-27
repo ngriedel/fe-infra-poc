@@ -115,3 +115,96 @@ describe('theming contract', () => {
     }
   });
 });
+
+/**
+ * Contrast, enforced rather than annotated.
+ *
+ * Every `--aic-*-foreground` in `theme.css` carried a hand-computed ratio in a
+ * comment — except one. `.dark` lifted `--aic-brand` to #D64B7C and left
+ * `--aic-brand-foreground` inheriting white from `:root`, giving 4.07:1 on every
+ * default button in three portals. Nothing recomputed the comments when a value
+ * moved, and the pair with no comment was the pair that broke.
+ *
+ * So: recompute all of them, and fail if a documented ratio drifts from reality
+ * or any pair drops below AA. Note the dark lift is bounded at BOTH ends — too
+ * light and white fails, too dark and graphite fails — so a future nudge to a
+ * brand value is exactly the change this needs to catch.
+ */
+describe('palette contrast', () => {
+  const AA_NORMAL = 4.5;
+
+  /** WCAG 2.x relative luminance for a #rrggbb colour. */
+  function luminance(hex: string): number {
+    const n = parseInt(hex.slice(1), 16);
+    const channel = (c: number) => {
+      const v = c / 255;
+      return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+    };
+    return (
+      0.2126 * channel((n >> 16) & 255) +
+      0.7152 * channel((n >> 8) & 255) +
+      0.0722 * channel(n & 255)
+    );
+  }
+
+  function contrast(a: string, b: string): number {
+    const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+
+  const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
+
+  /** Hex declarations inside one top-level block, with each line's trailing comment. */
+  function paletteIn(selector: RegExp): Record<string, { hex: string; note: string }> {
+    const body = selector.exec(theme)?.[1] ?? '';
+    const out: Record<string, { hex: string; note: string }> = {};
+    for (const m of body.matchAll(/(--aic-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;([^\n]*)/g)) {
+      out[m[1] as string] = { hex: (m[2] as string).toLowerCase(), note: m[3] ?? '' };
+    }
+    return out;
+  }
+
+  const light = paletteIn(/:root\s*\{([\s\S]*?)\n\}/);
+  const darkOverrides = paletteIn(/\.dark\s*\{([\s\S]*?)\n\}/);
+
+  // Model the cascade, not the source text. `.dark` inherits every `:root`
+  // value it does not redeclare — and the original bug was precisely a
+  // redeclared BASE inheriting a stale FOREGROUND, which a check that only
+  // looked at declarations present in the block could never see.
+  const dark = { ...light, ...darkOverrides };
+
+  /** Each foreground paired with its base colour, resolved the way the cascade does. */
+  function pairs(scope: 'light' | 'dark') {
+    const set = scope === 'light' ? light : dark;
+    return Object.keys(set)
+      .filter((token) => token.endsWith('-foreground'))
+      .map((token) => {
+        const baseToken = token.replace(/-foreground$/, '');
+        const base = set[baseToken];
+        return { token, baseToken, base, fg: set[token] as { hex: string; note: string } };
+      })
+      .filter((p) => p.base);
+  }
+
+  describe.each(['light', 'dark'] as const)('%s mode', (scope) => {
+    const cases = pairs(scope);
+
+    it('has pairs to check', () => {
+      expect(cases.length).toBeGreaterThan(0);
+    });
+
+    it.each(cases.map((c) => [c.baseToken, c] as const))('%s meets AA', (_name, c) => {
+      expect(contrast(c.base!.hex, c.fg.hex)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
+    it.each(cases.map((c) => [c.baseToken, c] as const))(
+      '%s matches its documented ratio',
+      (_name, c) => {
+        const documented = /([0-9]+\.[0-9]+):1/.exec(c.fg.note);
+        if (!documented) return; // not every pair carries a comment
+        const actual = contrast(c.base!.hex, c.fg.hex);
+        expect(actual).toBeCloseTo(Number(documented[1]), 2);
+      },
+    );
+  });
+});
