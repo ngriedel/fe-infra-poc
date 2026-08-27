@@ -1,36 +1,17 @@
 // utils
-export { cn } from './lib/utils/cn';
-export { classes } from './lib/utils/hlm';
-export { provideSpartanHlm } from './lib/utils/provide-spartan-hlm';
+export * from './lib/utils';
 
 // theme
-export { ThemeService, type ThemeMode } from './lib/theme/theme.service';
-export { UiThemeToggle } from './lib/theme/ui-theme-toggle.component';
+export * from './lib/theme';
 
 // form-field
-export { numberMask } from './lib/form-field/field-masks';
-export { HlmInputDirective, inputVariants } from './lib/form-field/hlm-input.directive';
-export { HlmLabelDirective } from './lib/form-field/hlm-label.directive';
-export {
-  HlmErrorComponent,
-  type FieldErrorAccessor,
-  type FieldErrorState,
-} from './lib/form-field/hlm-error.component';
-export { HlmFormFieldComponent } from './lib/form-field/hlm-form-field.component';
+export * from './lib/form-field';
 
 // button (canonical Spartan helm — brain-wired)
-export {
-  HlmButton,
-  HlmButtonImports,
-  buttonVariants,
-  type ButtonVariants,
-  injectBrnButtonConfig,
-  provideBrnButtonConfig,
-  type BrnButtonConfig,
-} from './lib/button';
+export * from './lib/button';
 
 // card
-export {
-  UiTransactionCard,
-  type TransactionStatus,
-} from './lib/card/ui-transaction-card.component';
+export * from './lib/card';
+
+// table (canonical Spartan helm — generated; styling-only, no brain counterpart)
+export * from './lib/table';

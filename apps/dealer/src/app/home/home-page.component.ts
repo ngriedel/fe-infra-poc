@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { HlmButton } from '@aic/shared/ui';
+import { HlmButton, HlmTableImports } from '@aic/shared/ui';
 import { AuthService } from '@aic/shared/auth';
 import type { DealerPoliciesResponse, DealerPolicy } from '@aic/dealer/contracts';
 
 @Component({
   selector: 'dealer-home-page',
   standalone: true,
-  imports: [HlmButton],
+  imports: [HlmButton, HlmTableImports],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-6xl flex-col gap-6 p-8">
@@ -46,37 +46,37 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic/dealer/contracts
         }
 
         @if (policies(); as rows) {
-          <div class="overflow-hidden rounded-md border border-border">
-            <table class="w-full text-sm">
-              <thead class="bg-muted text-muted-foreground">
-                <tr>
-                  <th class="px-3 py-2 text-left font-medium">Policy</th>
-                  <th class="px-3 py-2 text-left font-medium">Product</th>
-                  <th class="px-3 py-2 text-left font-medium">Status</th>
-                  <th class="px-3 py-2 text-right font-medium">Monthly</th>
-                  <th class="px-3 py-2 text-left font-medium">fieldF</th>
-                  <th class="px-3 py-2 text-left font-medium">fieldG</th>
-                  <th class="px-3 py-2 text-left font-medium">fieldH</th>
-                  <th class="px-3 py-2 text-left font-medium">fieldI</th>
-                  <th class="px-3 py-2 text-left font-medium">fieldJ</th>
+          <div hlmTableContainer class="rounded-md border border-border">
+            <table hlmTable>
+              <thead hlmTableHeader class="bg-muted">
+                <tr hlmTableRow>
+                  <th hlmTableHead>Policy</th>
+                  <th hlmTableHead>Product</th>
+                  <th hlmTableHead>Status</th>
+                  <th hlmTableHead class="text-right">Monthly</th>
+                  <th hlmTableHead>fieldF</th>
+                  <th hlmTableHead>fieldG</th>
+                  <th hlmTableHead>fieldH</th>
+                  <th hlmTableHead>fieldI</th>
+                  <th hlmTableHead>fieldJ</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody hlmTableBody>
                 @for (p of rows; track p.id) {
-                  <tr class="border-t border-border">
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.id }}</td>
-                    <td class="px-3 py-2">{{ p.product }}</td>
-                    <td class="px-3 py-2">{{ p.status }}</td>
-                    <td class="px-3 py-2 text-right">R{{ p.monthlyPremium }}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldF }}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldG }}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldH }}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldI }}</td>
-                    <td class="px-3 py-2 font-mono text-xs">{{ p.fieldJ }}</td>
+                  <tr hlmTableRow>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.id }}</td>
+                    <td hlmTableCell>{{ p.product }}</td>
+                    <td hlmTableCell>{{ p.status }}</td>
+                    <td hlmTableCell class="text-right">R{{ p.monthlyPremium }}</td>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.fieldF }}</td>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.fieldG }}</td>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.fieldH }}</td>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.fieldI }}</td>
+                    <td hlmTableCell class="font-mono text-xs">{{ p.fieldJ }}</td>
                   </tr>
                 } @empty {
-                  <tr>
-                    <td colspan="9" class="px-3 py-6 text-center text-muted-foreground">
+                  <tr hlmTableRow>
+                    <td hlmTableCell colspan="9" class="py-6 text-center text-muted-foreground">
                       No policies returned for this identity.
                     </td>
                   </tr>
