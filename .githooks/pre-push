@@ -7,8 +7,19 @@
 # BFF tests — was only enforced when somebody remembered to run it. This closes
 # that gap locally: you cannot push a red tree by accident.
 #
-# Deliberately NOT running `build`: it is the long pole, and lint/test/typecheck
-# already cover correctness. Nx caches, so an unchanged tree replays instantly.
+# `build` IS part of the gate, and it has to be: it is the only step that
+# type-checks Angular templates. The four apps have no `typecheck` target, so
+# `run-many -t typecheck` skips them silently — and even with one, plain `tsc`
+# treats an inline `template:` as an opaque string and never looks inside. Only
+# the Angular compiler reads templates, and only during a build.
+#
+# Demonstrated: `{{ auth.user().totallyNotAReadProperty }}` in a real template
+# passes lint + test + typecheck across all 19 projects, and fails the build with
+# TS2339. Templates are where most of an Angular app's logic lives; without this
+# step that half of the codebase has no gate in front of it.
+#
+# It is the long pole, but Nx caches per project, so an unchanged tree replays
+# instantly and you only pay for what you actually touched.
 #
 # Installed by the `prepare` script in package.json, which points
 # core.hooksPath at this directory. Bypass a single push with `--no-verify`.
@@ -21,11 +32,11 @@ if [ ! -x "$NX" ]; then
   exit 0
 fi
 
-echo "pre-push: running the gate (lint, test, typecheck, format) …"
+echo "pre-push: running the gate (lint, test, typecheck, build, format) …"
 
-if ! "$NX" run-many -t lint test typecheck; then
+if ! "$NX" run-many -t lint test typecheck build; then
   echo ""
-  echo "pre-push: FAILED — lint/test/typecheck did not pass."
+  echo "pre-push: FAILED — lint/test/typecheck/build did not pass."
   echo "          Fix the failures, or push with --no-verify to override."
   exit 1
 fi
