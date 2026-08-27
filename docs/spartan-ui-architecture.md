@@ -69,12 +69,17 @@ All helm + generic composites live in the **single** `libs/shared/ui` library
 We do **not** create a lib-per-component and we do **not** duplicate UI into apps.
 Both frontends consume it.
 
-> **Packaging decision (learned from the CLI's real output).** Spartan's CLI
-> `generateAs: "entrypoint"` does **not** add lightweight secondary entry points
-> to an existing lib — it scaffolds a **separate buildable ng-packagr library per
-> primitive** (e.g. `libs/shared/ui/button`, `libs/shared/ui/utils`, each with its
-> own `project.json`/`ng-package.json`). Pointed at our existing `libs/shared/ui`,
-> that **nests Nx projects inside another project** (an anti-pattern). So we keep
+> **Packaging decision (learned from the CLI's real output).** With
+> `buildable: true`, Spartan's CLI `generateAs: "entrypoint"` does **not** add
+> lightweight secondary entry points to an existing lib — it scaffolds a
+> **separate buildable ng-packagr library per primitive** (e.g.
+> `libs/shared/ui/button`, `libs/shared/ui/utils`, each with its own
+> `project.json`/`ng-package.json`). Pointed at our existing `libs/shared/ui`,
+> that **nests Nx projects inside another project** (an anti-pattern). With
+> `buildable: false` (our setting) `generateEntrypointFiles` skips nx's
+> `librarySecondaryEntryPointGenerator` and instead writes
+> `libs/shared/ui/<name>/src/` plus a per-primitive tsconfig path alias — no
+> nested project, but still not our single-barrel layout. Either way we keep
 > our single flat lib and place the CLI's (style-transformed) output into
 > `src/lib/<name>/`, wired through the barrel. The component **code is
 > byte-identical to the generator**; only the packaging differs. Revisit adopting
@@ -97,13 +102,61 @@ commit it explicitly so `style`/`importAlias` are fixed and codemods
 }
 ```
 
-> **Adding a component:** do **not** run `nx g @spartan-ng/cli:ui <name>`
-> directly against this repo — it nests buildable libs (see above). Instead
-> generate to a scratch path (or read the templates under
-> `node_modules/@spartan-ng/cli/src/generators/ui/libs/<name>`), copy the
-> transformed `hlm-*.ts` into `libs/shared/ui/src/lib/<name>/`, repoint its
-> `classes` import to `../utils/hlm`, add a per-folder `index.ts`, and export it
-> from the barrel. Diff the CLI templates on upgrade to pull upstream fixes (§7).
+> **Adding a component: run `tools/spartan-add.js`, not the CLI generator.**
+>
+> ```sh
+> pnpm spartan:add <primitive>          # e.g. badge, dialog, select
+> # or directly: node tools/spartan-add.js <primitive>
+> ```
+>
+> It prints the files it wrote and the `export * from './lib/<primitive>'` line to
+> paste into `libs/shared/ui/src/index.ts`. It also warns about prerequisite
+> primitives and missing peer deps.
+>
+> **Why not `nx g @spartan-ng/cli:ui <primitive>`.** The CLI does two jobs and we
+> want only one. Job 1, **transform**, resolves the templates' `spartan-*`
+> placeholder classes against our `style` flavour — mandatory, see below. Job 2,
+> **scaffold**, creates an Nx project to hold the result — which we do not want.
+> Verified by dry run against this repo:
+>
+> ```
+> $ nx g @spartan-ng/cli:ui badge --dry-run
+> CREATE libs/shared/ui/badge/project.json
+> CREATE libs/shared/ui/utils/project.json        <- a SECOND utils, duplicating ours
+> CREATE libs/shared/ui/badge/ng-package.json
+> CREATE libs/shared/ui/badge/tsconfig.lib.json
+> UPDATE tsconfig.base.json / nx.json / package.json
+> ```
+>
+> Two buildable libraries nested inside `libs/shared/ui`, plus a duplicate
+> `utils`. The cause is that our config is never read: `hlmUIGenerator` calls
+> `loadOrInitConfig(tree, { angularCli: options.angularCli ?? true })`, so
+> `components.json` is parsed with `AngularCliConfigSchema` — which has **no
+> `buildable` and no `generateAs` key**. Zod strips both, and they fall back to
+> `buildable: true` / `generateAs: "library"`.
+>
+> **Never copy a template straight out of `node_modules` either.** Every 1.0.2
+> template is placeholder-only (`spartan-table-head`,
+> `spartan-button-variant-default`), and those class names are defined **nowhere**
+> in brain's `hlm-tailwind-preset.css` or our `theme.css` — they live in the CLI's
+> `style-<style>.css` (ours: `vega`). Skip the transform and the component renders
+> **completely unstyled, with no error anywhere in the build**: TypeScript, the
+> Angular compiler, ESLint and Tailwind all pass, because an unknown class name is
+> not an error — it simply produces no CSS. `tools/spartan-add.js` exists to make
+> that unskippable; it calls the CLI's own `createStyleMap` / `transformStyle`,
+> then places the output in our flat layout (rewriting `<alias>/utils` to
+> `../utils/hlm` and `<alias>/<other>` to `../<other>`, and pointing `index.ts` at
+> its siblings).
+>
+> If you ever doubt the pipeline, regenerate an existing primitive and diff: the
+> button reproduces **byte-for-byte**. Diff the CLI templates on upgrade to pull
+> upstream fixes (§7).
+>
+> **In templates, prefer the long-form attribute aliases** — `hlmTableHeader`,
+> `hlmTableRow`, `hlmTableHead`, `hlmTableCell` — which is what spartan.ng's own
+> examples use. The short aliases (`hlmTHead`, `hlmTr`, `hlmTh`, `hlmTd`) are
+> exactly equivalent (each directive declares both), but matching the docs keeps
+> our markup diffable against upstream examples.
 
 ### Module boundaries
 
@@ -455,12 +508,12 @@ browser forces its own yellow.
 All four portals share the palette. The single token an app overrides is `--app-accent`,
 used for the strip across the top of the shell:
 
-| App    | Accent                | Hex       |
-| ------ | --------------------- | --------- |
-| client | step-selected crimson | `#870A3C` |
-| agent  | information blue      | `#099EF3` |
-| dealer | success green         | `#3BB719` |
-| broker | warning orange        | `#FF9700` |
+| App    | Accent             | Hex       |
+| ------ | ------------------ | --------- |
+| client | brand plum         | `#AF144B` |
+| agent  | step-selected plum | `#870A3C` |
+| dealer | warning orange     | `#FF9700` |
+| broker | information blue   | `#099EF3` |
 
 This replaces the old per-app `--primary` overrides (teal/violet/blue), which were invented
 colours rather than brand ones.

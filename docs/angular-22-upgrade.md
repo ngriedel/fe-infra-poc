@@ -19,6 +19,19 @@ at Angular 21**. Plus a required **TypeScript 6** bump. Revisit when Nx 23.1 shi
 
 Node 24 ✅ (Angular 22 wants Node 22+).
 
+> **Read the ticks as "available upstream", not "we are on it".** Nothing in this table
+> has been installed. As of 2026-08-27 the repo is on `nx@^22.7.4`, `@nx/angular@22.7.4`,
+> `typescript@^5.9.3`, `jest-preset-angular@~16.0.0`, `angular-eslint@^21.2.0`,
+> `@angular/cdk@^21.2.12` and `@angular/core@~21.2.0`. So `jest-preset-angular` is ticked
+> because **17.0.0 exists and lifts the cap**, not because we have taken it — the same
+> goes for `angular-eslint`. Both are hard peer blocks that must move as part of the
+> upgrade, not prerequisites already satisfied.
+>
+> The version facts below were captured when this file was written and have not been
+> re-checked here. [docs/direction-review.md](direction-review.md) §1 carries a later,
+> independently verified picture — including two peer blocks this table misses and the
+> reason to land on Angular 22.1.x rather than 22.0.x.
+
 ## Green-light checklist
 
 - [ ] **Nx 23.1 is stable** — `npm view nx dist-tags` shows `latest: 23.1.x` (today

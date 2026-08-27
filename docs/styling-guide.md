@@ -248,6 +248,14 @@ Here's why you should never eyeball this. White text on the palette's own colour
 White looks fine on orange to most eyes on a good monitor. It is not fine, and it is a
 real accessibility failure. This exact bug was in this codebase.
 
+> **These ratios are light mode.** Dark mode re-points several palette values, so the
+> same pair can land somewhere else entirely — and did. `.dark` lifted `--aic-brand`
+> without re-declaring `--aic-brand-foreground`, leaving white on the lifted plum at
+> **4.07 : 1** — a real AA failure on every default button in three portals, live until
+> 2026-08-27. It is now `#C93F72` at **4.73 : 1**, and `palette contrast` in
+> `theming-contract.spec.ts` recomputes every pair in both modes on each test run, so a
+> value that drifts under 4.5 : 1 fails the build rather than shipping.
+
 **You never have to think about it.** Every colour has a matching `-foreground` that has
 already been measured:
 
