@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HlmButton } from '@aic/shared/ui';
+import { HlmButton, HlmInput, HlmLabel } from '@aic/shared/ui';
 import { AuthService } from './auth.service';
 
 @Component({
   selector: 'client-login-page',
   standalone: true,
-  imports: [FormsModule, RouterLink, HlmButton],
+  imports: [FormsModule, RouterLink, HlmButton, HlmInput, HlmLabel],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <main class="container mx-auto flex min-h-screen max-w-sm flex-col justify-center gap-6 p-8">
@@ -19,16 +19,8 @@ import { AuthService } from './auth.service';
       @if (step() === 'email') {
         <form (submit)="onRequest($event)" class="space-y-3">
           <label class="block space-y-1">
-            <span class="text-sm font-medium">Email</span>
-            <input
-              type="email"
-              name="email"
-              required
-              [(ngModel)]="email"
-              class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm
-                     ring-offset-background placeholder:text-muted-foreground
-                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-            />
+            <span hlmLabel>Email</span>
+            <input hlmInput type="email" name="email" required [(ngModel)]="email" />
           </label>
           <button hlmBtn type="submit" class="w-full" [disabled]="busy()">
             {{ busy() ? 'Sending…' : 'Send code' }}
@@ -57,15 +49,16 @@ import { AuthService } from './auth.service';
             }
           </p>
           <label class="block space-y-1">
-            <span class="text-sm font-medium">6-digit code</span>
+            <span hlmLabel>6-digit code</span>
             <input
+              hlmInput
               type="text"
               name="code"
               inputmode="numeric"
               maxlength="6"
               required
               [(ngModel)]="code"
-              class="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-center text-lg tracking-widest"
+              class="text-center text-lg tracking-widest"
             />
           </label>
           <button hlmBtn type="submit" class="w-full" [disabled]="busy()">
