@@ -1,0 +1,56 @@
+# CI — the same gate the pre-push hook runs, on a machine nobody can bypass.
+#
+# `.githooks/pre-push` is good, but it is local: `--no-verify` skips it, and it
+# does not exist on a fresh clone or for anyone who has not run `pnpm install`.
+# Everything it protects — the theming contract, palette contrast, workspace
+# naming, Zod import hygiene, Nx module boundaries and Angular template
+# type-checking — is only as real as the place it runs.
+#
+# The target list is deliberately IDENTICAL to the hook's, so the two cannot
+# drift into disagreeing about what "green" means.
+
+name: CI
+
+on:
+  push:
+    branches: [main, develop, azure]
+  pull_request:
+    branches: [main, develop]
+
+# A newer push to the same branch makes the older run irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gate:
+    name: lint · test · typecheck · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # corepack reads `packageManager` from package.json, so CI uses the exact
+      # pnpm the repo pins (10.33.2) rather than whatever is newest.
+      - name: Enable corepack
+        run: corepack enable
+
+      - uses: actions/setup-node@v4
+        with:
+          # `engines.node` requires >=24.15.0 — Angular 22 peers
+          # ^22.22.3 || ^24.15.0 || >=26.0.0.
+          node-version: 24
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # `build` is not optional here. It is the only step that type-checks Angular
+      # templates: the apps have no `typecheck` target, so `-t typecheck` skips
+      # them, and plain `tsc` treats an inline `template:` as an opaque string.
+      - name: Gate
+        run: pnpm exec nx run-many -t lint test typecheck build
+
+      - name: Formatting
+        run: pnpm exec nx format:check

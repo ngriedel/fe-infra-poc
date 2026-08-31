@@ -2,10 +2,11 @@
 #
 # Pre-push gate.
 #
-# The repo has no CI pipeline yet (that is a GoCD/devops conversation), which
-# meant every check here — the theming contract, the Nx module boundaries, the
-# BFF tests — was only enforced when somebody remembered to run it. This closes
-# that gap locally: you cannot push a red tree by accident.
+# This runs the same targets as .github/workflows/ci.yml, deliberately. CI is the
+# gate that counts — it cannot be skipped with --no-verify and it runs on a fresh
+# clone — but a failure there costs a round trip, so the same checks run here
+# first. If you change the target list, change it in both places or they will
+# drift into disagreeing about what "green" means.
 #
 # `build` IS part of the gate, and it has to be: it is the only step that
 # type-checks Angular templates. The four apps have no `typecheck` target, so
