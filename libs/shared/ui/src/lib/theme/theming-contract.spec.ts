@@ -107,6 +107,36 @@ describe('theming contract', () => {
     expect([...tagged].sort()).toEqual([...THEMEABLE].sort());
   });
 
+  /**
+   * The `inline` keyword is load-bearing and fails silently without it.
+   *
+   * `@theme inline` substitutes each theme variable's VALUE into the utility.
+   * Every value here is a `var(--aic-*)` reference, so what gets substituted is
+   * the reference — `bg-app-accent` emits `var(--app-accent)` and resolves at the
+   * element. Drop `inline` and the utility references `--color-app-accent`
+   * instead, which CSS resolves where it was declared (`:root`) — so `.dark` and
+   * every `.theme-<app>` override on a descendant is silently ignored. The app
+   * still builds and renders; it just renders the wrong colours.
+   */
+  it('registers the AIC colour families with `@theme inline`, not a bare `@theme`', () => {
+    const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
+    expect(theme).toMatch(/@theme\s+inline\s*\{/);
+    expect(theme).not.toMatch(/@theme\s*\{/);
+  });
+
+  it('maps every registered --color-* to a var() reference, never a literal', () => {
+    const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
+    const block = /@theme\s+inline\s*\{([\s\S]*?)\n\}/.exec(theme)?.[1] ?? '';
+    expect(block.length).toBeGreaterThan(0);
+
+    const offenders: string[] = [];
+    for (const m of block.matchAll(/(--color-[a-z0-9-]+)\s*:\s*([^;]+);/g)) {
+      // A literal here would be baked in at build time, defeating the override.
+      if (!/^var\(--[a-z0-9-]+\)$/.test((m[2] ?? '').trim())) offenders.push(m[1] as string);
+    }
+    expect(offenders).toEqual([]);
+  });
+
   it('tags every themeable token at a real declaration, not just in prose', () => {
     const theme = readFileSync(join(ROOT, 'libs/shared/ui/src/theme.css'), 'utf8');
     for (const token of THEMEABLE) {

@@ -9,6 +9,11 @@
    so register it explicitly (replaces v3 createGlobPatternsForDependencies). */
 @source '../../../libs/shared/ui/src';
 
+/* Tailwind v4 auto-detects sources from the repo root, so every fenced code
+   block in docs/ was being scanned and its classes shipped — bg-blue-600 and
+   bg-brand reached production CSS from prose counter-examples alone. */
+@source not '../../../docs';
+
 /*
  * broker portal theme.
  *

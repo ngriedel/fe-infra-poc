@@ -162,7 +162,10 @@ const OTHER_COLORS: readonly { value: OtherColor; label: string }[] = [
               Reload from server
             </button>
             @if (savedId(); as id) {
-              <span class="text-sm text-emerald-600">Saved ✓ (id: {{ id }})</span>
+              <span
+                class="inline-flex items-center rounded-full border border-success bg-success-filled px-2 py-0.5 text-xs font-medium text-foreground"
+                >Saved ✓ (id: {{ id }})</span
+              >
             }
           </div>
         </form>
