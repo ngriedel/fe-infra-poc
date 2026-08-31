@@ -1,4 +1,59 @@
-# Angular 22 Upgrade — Holding on Nx (status: NEARLY READY, updated 2026-07-01)
+# Angular 22 upgrade — done (2026-08-31)
+
+Landed on `chore/angular-22`. This file was a green-light checklist; it is now a
+record. The checklist's version facts are preserved below the line for provenance,
+but they were **re-verified against npm before the upgrade** and two were wrong.
+
+## What shipped
+
+| Package               | From       | To                          |
+| --------------------- | ---------- | --------------------------- |
+| `@angular/*`          | `~21.2.0`  | `~22.1.0` (resolved 22.1.4) |
+| `@angular/cdk`        | `^21.2.12` | `^22.1.4`                   |
+| `nx`, `@nx/*`         | `22.7.4`   | `23.1.2`                    |
+| `typescript`          | `^5.9.3`   | `~6.0.3`                    |
+| `jest-preset-angular` | `~16.0.0`  | `~17.0.0`                   |
+| `angular-eslint`      | `^21.2.0`  | `^22.2.0`                   |
+| `engines.node`        | `>=24.0.0` | `>=24.15.0`                 |
+
+## Corrections to the checklist below
+
+- **TypeScript is 6.0.3, not 7.x.** `@angular/compiler-cli@22.1.4` peers
+  `typescript ">=6.0 <6.1"`. TypeScript 7.0.2 is published and is _not_ usable.
+- **`withFetch()` was not a breaking change** — it is deprecated because fetch is
+  now the default backend. Removed from all four app configs.
+- **`nx migrate latest` did not do the work.** It bumped `nx` alone and reported no
+  migrations, leaving the plugins and Angular untouched. Versions were set
+  explicitly instead. No code migrations were needed: the workspace is already
+  standalone, zoneless, OnPush throughout, and on the new control flow.
+- **`engines.node >= 24.0.0` was too loose.** Angular 22 requires
+  `^22.22.3 || ^24.15.0 || >=26.0.0`, so 24.0–24.14 would have installed and failed.
+
+## What TypeScript 6 forced
+
+Two deprecations became errors, handled differently on purpose:
+
+- `baseUrl` — **removed**. Every `paths` entry was already relative to
+  `tsconfig.base.json`, which is how TS resolves them without it.
+- `moduleResolution: "node10"` — **deferred**. It survives in 13 spec and BFF
+  configs that pair it with `module: "commonjs"`, where `bundler` is not a legal
+  substitute. `ignoreDeprecations: "6.0"` takes it for now. **TypeScript 7 removes
+  the option outright, so this has a deadline**, and modernising those configs is
+  its own change with its own risk.
+
+## Still open
+
+- The `moduleResolution` work above.
+- A `platform:browser` / `platform:node` tag axis (see architecture-decisions).
+- `openid-client` v5 → v6 — real debt in the auth path, belongs on the security
+  backlog with its own window.
+- A jest worker sometimes fails to exit gracefully under the full 19-project
+  parallel run. Not reproducible in any single project, so it reads as a jest-30
+  worker-pool artifact rather than a leak, but it is unexplained.
+
+---
+
+## Original green-light checklist (pre-upgrade, kept for provenance)
 
 We are **staying on Angular 21.2** for now. As of 2026-07-01 almost every blocker
 from the original hold has cleared. The **only hard gate left is Nx**: Angular 22
