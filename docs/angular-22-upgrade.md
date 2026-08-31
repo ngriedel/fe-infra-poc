@@ -35,15 +35,18 @@ Two deprecations became errors, handled differently on purpose:
 
 - `baseUrl` — **removed**. Every `paths` entry was already relative to
   `tsconfig.base.json`, which is how TS resolves them without it.
-- `moduleResolution: "node10"` — **deferred**. It survives in 13 spec and BFF
-  configs that pair it with `module: "commonjs"`, where `bundler` is not a legal
-  substitute. `ignoreDeprecations: "6.0"` takes it for now. **TypeScript 7 removes
-  the option outright, so this has a deadline**, and modernising those configs is
-  its own change with its own risk.
+- `moduleResolution: "node10"` — **cleared (2026-08-31)**, shortly after the
+  upgrade. All 13 spec and BFF configs moved from `module: "commonjs"` +
+  `moduleResolution: "node10"` to **`node16`/`node16`**, and
+  `ignoreDeprecations` was removed from `tsconfig.base.json` entirely — the debt
+  is gone rather than silenced. This turned out cheaper than feared: node16 is
+  stricter about CJS/ESM resolution, so the expectation was cascading import
+  errors, and there were none. The BFF output was checked at runtime, not just
+  compiled: it still emits CommonJS with Nx's path resolver, and loads far enough
+  to reach env validation.
 
 ## Still open
 
-- The `moduleResolution` work above.
 - A `platform:browser` / `platform:node` tag axis (see architecture-decisions).
 - `openid-client` v5 → v6 — real debt in the auth path, belongs on the security
   backlog with its own window.
