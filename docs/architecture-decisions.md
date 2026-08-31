@@ -294,6 +294,22 @@ Enforced by `workspace-conventions.spec.ts`, which also asserts every
 straight through with no folder fallback, and with no sibling `package.json` a
 missing name throws at graph construction.
 
+### Adding a lib
+
+Pass `--name` and `--importPath` explicitly. The generator derives both from the
+folder otherwise, and derives them wrongly — `libs/shared/widgets` alone yields
+project `widgets` and alias `@aic/widgets`, which is how the old drift started:
+
+```sh
+nx g @nx/js:lib libs/shared/widgets \
+  --name shared-widgets \
+  --importPath @aic-shared/widgets
+```
+
+`workspace-conventions.spec.ts` fails the push if either is wrong, so the mistake
+is caught — but it is caught at push, not at creation, so it is worth getting
+right the first time.
+
 ### `scope:` — who owns it
 
 `client` · `agent` · `dealer` · `broker` · `shared`
