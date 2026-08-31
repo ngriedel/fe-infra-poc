@@ -132,22 +132,38 @@
 .dark {
   color-scheme: dark;
 
-  /* DERIVED, NOT OFFICIAL.
-     The brand document supplies one set of values and they are light-mode: the
-     "filled" tints are near-white and vanish on a dark page. The strong outline
-     colours are kept as-is (they read well on dark), and each pale surface is
-     re-derived as that same accent mixed into the dark page background, which
-     preserves the light-mode relationship rather than inventing new hues.
-     Stored as literal hex, not a live color-mix(): the build emits a plain
-     fallback plus an @supports wrapper for color-mix, and that fallback would
-     render each tint at FULL strength as a surface on older browsers. The
-     values below are exactly what color-mix(in oklab, …) produces over the dark
-     background (#020618), computed once. NEEDS BRAND SIGN-OFF. */
-  --aic-info-filled: #051833; /* info @ 15% over the dark background */
-  --aic-error-filled: #1d1525; /* error @ 15% */
-  --aic-success-filled: #041d21; /* success @ 15% */
-  --aic-warning-filled: #1d1a22; /* warning @ 15% */
-  --aic-autofill: #252f37; /* autofill @ 20% */
+  /* DERIVED, NOT OFFICIAL. NEEDS BRAND SIGN-OFF.
+     The brand document is light-mode only: its "filled" tints are near-white and
+     vanish on a dark page, so each one is re-derived here.
+
+     These were previously mixed as "accent @ 15% over the dark background", and
+     that is what broke them. The dark background #020618 is not neutral — it is
+     oklch(0.130 0.043 265) — so at a 15% mix it contributed most of the result's
+     hue and the tints ended up nowhere near their own accent:
+
+       info     accent 244.0°  ->  tint 257.1°   (13° off)
+       success  accent 140.4°  ->  tint 209.4°   (69° off)
+       error    accent  22.5°  ->  tint 306.7°
+       warning  accent  63.6°  ->  tint 302.2°   (121° off — an orange rendered
+                                                  as a purple-grey)
+
+     Worse, error and warning landed 0.020 apart in Oklab — one JND, the
+     threshold of being distinguishable at all. Only the strong outline colours
+     beside them kept the statuses readable.
+
+     So each tint is now authored AT ITS OWN ACCENT'S HUE, at a shared lightness
+     and chroma (L 0.213, C 0.050) so the four read as one family. The closest
+     pair is now 0.034 apart, and the dark foreground sits at 16.7:1 or better on
+     every one of them.
+
+     Still literal hex rather than a live color-mix(): the build emits a plain
+     fallback alongside an @supports wrapper, and that fallback would render each
+     tint at FULL strength as a surface. */
+  --aic-info-filled: #011b2e; /* L 0.213 C 0.050 h 244.0° — info's own hue */
+  --aic-error-filled: #2c0e0e; /* h 22.5° — from the DARK error #f26a6a */
+  --aic-success-filled: #0b1e07; /* h 140.4° */
+  --aic-warning-filled: #291300; /* h 63.6° — was 302.2° */
+  --aic-autofill: #2e3010; /* L 0.299 C 0.050 h 111.5° — same defect: was 242.5°, a blue-grey from a pale yellow */
   --aic-secondary-filled: oklch(0.279 0.041 260.031);
   --aic-secondary-helper: oklch(0.704 0.04 256.788);
   --aic-secondary-line: oklch(1 0 0 / 15%);
