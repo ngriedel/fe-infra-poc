@@ -1,4 +1,4 @@
-import type { SessionUser } from '@aic/bff/contracts';
+import type { SessionUser } from '@aic-shared/contracts';
 
 export interface OidcAuthorizeResult {
   /** Where to redirect the browser (IdP authorize URL, or the callback in the stub). */

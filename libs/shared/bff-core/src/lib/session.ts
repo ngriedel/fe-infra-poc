@@ -1,4 +1,4 @@
-import type { SessionUser } from '@aic/bff/contracts';
+import type { SessionUser } from '@aic-shared/contracts';
 
 /**
  * Strongly type the server-side session (`@fastify/session`) with our

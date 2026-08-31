@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { HlmButton, HlmTableImports } from '@aic/shared/ui';
-import { AuthService } from '@aic/shared/auth';
-import type { BrokerPoliciesResponse, BrokerPolicy } from '@aic/broker/contracts';
+import { HlmButton, HlmTableImports } from '@aic-shared/ui';
+import { AuthService } from '@aic-shared/auth';
+import type { BrokerPoliciesResponse, BrokerPolicy } from '@aic-broker/contracts';
 
 @Component({
   selector: 'broker-home-page',

@@ -65,7 +65,7 @@ generate the button the canonical way.
 ### One shared UI lib (flat), single barrel
 
 All helm + generic composites live in the **single** `libs/shared/ui` library
-(tags `scope:shared`, `type:ui`), exported through one barrel (`@aic/shared/ui`).
+(tags `scope:shared`, `type:ui`), exported through one barrel (`@aic-shared/ui`).
 We do **not** create a lib-per-component and we do **not** duplicate UI into apps.
 Both frontends consume it.
 
@@ -98,7 +98,7 @@ commit it explicitly so `style`/`importAlias` are fixed and codemods
   "buildable": false,
   "generateAs": "entrypoint",
   "style": "vega", // component recipe flavour (see §4)
-  "importAlias": "@aic/shared/ui",
+  "importAlias": "@aic-shared/ui",
 }
 ```
 
@@ -457,7 +457,7 @@ Executed as a **thin vertical slice first** (button), then breadth.
 | Component recipe flavour (`style`) | `vega` / `nova` / `lyra` / `maia` / `mira` / `luma` | `vega` (swappable; preview on spartan.ng) |
 | Base colour theme (`init --theme`) | `neutral` / `stone` / `zinc` / `gray` / `slate`     | `slate` (rebrand per-app later)           |
 | Token value format                 | OKLCH / hsl()                                       | **OKLCH** (done)                          |
-| Library packaging                  | Spartan per-lib / single flat lib                   | **single flat `@aic/shared/ui`** (done)   |
+| Library packaging                  | Spartan per-lib / single flat lib                   | **single flat `@aic-shared/ui`** (done)   |
 
 ### Resolved: "Empty sub-selector" warning = Tailwind wasn't running
 

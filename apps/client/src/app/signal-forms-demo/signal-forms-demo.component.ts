@@ -21,7 +21,7 @@ import {
   HlmInput,
   HlmLabel,
   numberMask,
-} from '@aic/shared/ui';
+} from '@aic-shared/ui';
 import {
   type ColorOption,
   type OtherColor,

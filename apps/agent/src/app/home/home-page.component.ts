@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
-import { HlmButton, HlmTableImports } from '@aic/shared/ui';
-import { AuthService } from '@aic/shared/auth';
-import type { AgentPoliciesResponse, AgentPolicy } from '@aic/agent/contracts';
+import { HlmButton, HlmTableImports } from '@aic-shared/ui';
+import { AuthService } from '@aic-shared/auth';
+import type { AgentPoliciesResponse, AgentPolicy } from '@aic-agent/contracts';
 
 @Component({
   selector: 'agent-home-page',

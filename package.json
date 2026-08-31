@@ -1,5 +1,5 @@
 {
-  "name": "aic",
+  "name": "@aic/source",
   "version": "0.0.0",
   "private": true,
   "description": "AIC POC — Nx monorepo with client + agent Angular frontends and per-frontend Fastify BFFs.",

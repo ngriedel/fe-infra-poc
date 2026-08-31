@@ -12,7 +12,7 @@ See [docs/architecture-decisions.md](docs/architecture-decisions.md) for the why
 | Frontends   | Angular 21 (standalone, signals, esbuild)                          |
 | Backends    | Fastify 5 (per-frontend BFF)                                       |
 | UI          | Spartan NG (brain + CLI-generated helm) + Tailwind 4 + Angular CDK |
-| Validation  | Zod 4 (schemas shared via `@aic/bff/contracts`)                    |
+| Validation  | Zod 4 (schemas shared via `@aic-shared/contracts`)                 |
 | Sessions    | `@fastify/secure-session` (HttpOnly, SameSite=Lax, signed)         |
 | Client auth | Magic link + 6-digit OTP (passwordless)                            |
 | Agent auth  | OIDC against Azure AD (stubbed for local dev)                      |
@@ -117,15 +117,15 @@ docs/
 
 ## Path aliases
 
-| Import path          | Resolves to                                  |
-| -------------------- | -------------------------------------------- |
-| `@aic/shared/ui`     | Spartan helm components + cn/classes utils   |
-| `@aic/bff/contracts` | Zod schemas + inferred types                 |
-| `@aic/bff/core`      | Fastify factory, plugins, guards, env loader |
+| Import path             | Resolves to                                  |
+| ----------------------- | -------------------------------------------- |
+| `@aic-shared/ui`        | Spartan helm components + cn/classes utils   |
+| `@aic-shared/contracts` | Zod schemas + inferred types                 |
+| `@aic-shared/bff-core`  | Fastify factory, plugins, guards, env loader |
 
 ## How the BFFs serve workspace deps
 
-Both BFFs build with `@nx/esbuild` (`bundle: false`). Nx injects a tiny runtime resolver into `main.js` that maps `@aic/*` imports to source files copied alongside the output. So even without bundling, the dist is self-contained and `node dist/apps/<bff>/main.js` works after a build.
+Both BFFs build with `@nx/esbuild` (`bundle: false`). Nx injects a tiny runtime resolver into `main.js` that maps `@aic-*/*` imports to source files copied alongside the output. So even without bundling, the dist is self-contained and `node dist/apps/<bff>/main.js` works after a build.
 
 ## Status
 

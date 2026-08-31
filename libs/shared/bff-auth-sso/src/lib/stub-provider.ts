@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import type { SessionUser } from '@aic/bff/contracts';
-import { badRequest } from '@aic/bff/core';
+import type { SessionUser } from '@aic-shared/contracts';
+import { badRequest } from '@aic-shared/bff-core';
 import type { OidcAuthorizeResult, OidcCallbackParams, OidcProvider } from './oidc-provider';
 
 /** The canned identity returned when no overrides are supplied (agent BFF). */

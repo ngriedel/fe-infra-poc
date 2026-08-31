@@ -8,20 +8,20 @@ A living record of the big calls behind the AIC POC, with the reasoning that goe
 
 ## Decisions at a glance
 
-| Area | Decision | Status |
-|---|---|---|
-| Repo layout | Nx monorepo, pnpm workspaces | ✅ |
-| Frontends | Two Angular apps (client, agent), more later | ✅ |
-| Backend pattern | BFF per frontend (Fastify) | ✅ |
-| BFF topology | Two separate processes, not one shared | ✅ |
-| UI library | Spartan NG + Tailwind, Angular CDK for primitives | ✅ |
-| Shared contracts | Zod schemas in a shared lib | ✅ |
-| Client auth | Magic link + OTP (passwordless) | ✅ |
-| Agent auth | Enterprise SSO via OIDC against Azure AD | ✅ |
-| Sessions | Stateless encrypted cookie now; server-side store for agent BFF later | 🔄 |
-| Domain model | Pure TypeScript lib, framework-free | ✅ |
-| State mgmt | Signals + lightweight per-feature stores | 🔄 |
-| Realtime | Not in POC scope | 🟡 |
+| Area             | Decision                                                              | Status |
+| ---------------- | --------------------------------------------------------------------- | ------ |
+| Repo layout      | Nx monorepo, pnpm workspaces                                          | ✅     |
+| Frontends        | Two Angular apps (client, agent), more later                          | ✅     |
+| Backend pattern  | BFF per frontend (Fastify)                                            | ✅     |
+| BFF topology     | Two separate processes, not one shared                                | ✅     |
+| UI library       | Spartan NG + Tailwind, Angular CDK for primitives                     | ✅     |
+| Shared contracts | Zod schemas in a shared lib                                           | ✅     |
+| Client auth      | Magic link + OTP (passwordless)                                       | ✅     |
+| Agent auth       | Enterprise SSO via OIDC against Azure AD                              | ✅     |
+| Sessions         | Stateless encrypted cookie now; server-side store for agent BFF later | 🔄     |
+| Domain model     | Pure TypeScript lib, framework-free                                   | ✅     |
+| State mgmt       | Signals + lightweight per-feature stores                              | 🔄     |
+| Realtime         | Not in POC scope                                                      | 🟡     |
 
 ---
 
@@ -108,7 +108,7 @@ We could have run one Fastify process serving both frontends with route prefixes
 
 - Two processes to run locally — Nx `run-many` handles this in dev with one command.
 - Two pipelines, two sets of dashboards — solved by templating; everything common lives in `libs/bff/core`.
-- Risk of code duplication — mitigated by sharing everything *non-frontend-specific* (Fastify plugins, validators, HTTP clients) via `libs/bff/*`.
+- Risk of code duplication — mitigated by sharing everything _non-frontend-specific_ (Fastify plugins, validators, HTTP clients) via `libs/bff/*`.
 
 **Bottom line:** one shared backend was cheaper to start but compounds coupling forever. Two BFFs cost a marginal amount of infra and pay back in clarity and safety.
 
@@ -259,23 +259,99 @@ The POC ships with two frontends, but the structure assumes more are coming (bro
 
 ---
 
+## Library naming and the tag vocabulary
+
+Folders group; **tags enforce**. Nx is explicit that folder structure is
+convention rather than mechanism — `@nx/enforce-module-boundaries` reads tags, not
+paths — so both are documented here and the tags are the part that fails a build.
+
+### Naming
+
+A lib's project name is `<scope>-<leaf>`, and its import alias is
+`@aic-<scope>/<leaf>` — the first dash becomes the slash:
+
+| Folder                 | Project           | Alias                  |
+| ---------------------- | ----------------- | ---------------------- |
+| `libs/shared/ui`       | `shared-ui`       | `@aic-shared/ui`       |
+| `libs/shared/bff-core` | `shared-bff-core` | `@aic-shared/bff-core` |
+| `libs/agent/contracts` | `agent-contracts` | `@aic-agent/contracts` |
+
+Two reasons this is a rule rather than a preference:
+
+- **`@nx/js:lib` derives the name from the last folder segment** when `--name` is
+  omitted. That is how `libs/bff/contracts` came to own the bare word `contracts`
+  and force `agent-contracts` / `broker-contracts` to be hand-named around it. The
+  generator actively produces the drift.
+- **One slash, because an alias is a package name.** npm allows exactly one `/`,
+  the scope separator, so `@aic/shared/ui` is invalid as a package name. New Nx
+  workspaces default to package-manager workspaces where the alias _is_ the
+  package name — this spelling is Nx's documented flattening
+  ([switch-to-workspaces-project-references](https://nx.dev/docs/kb/switch-to-workspaces-project-references)),
+  and adopting it now avoids renaming twice.
+
+Enforced by `workspace-conventions.spec.ts`, which also asserts every
+`project.json` declares a `name` — mandatory, not stylistic: Nx passes `json.name`
+straight through with no folder fallback, and with no sibling `package.json` a
+missing name throws at graph construction.
+
+### Adding a lib
+
+Pass `--name` and `--importPath` explicitly. The generator derives both from the
+folder otherwise, and derives them wrongly — `libs/shared/widgets` alone yields
+project `widgets` and alias `@aic/widgets`, which is how the old drift started:
+
+```sh
+nx g @nx/js:lib libs/shared/widgets \
+  --name shared-widgets \
+  --importPath @aic-shared/widgets
+```
+
+`workspace-conventions.spec.ts` fails the push if either is wrong, so the mistake
+is caught — but it is caught at push, not at creation, so it is worth getting
+right the first time.
+
+### `scope:` — who owns it
+
+`client` · `agent` · `dealer` · `broker` · `shared`
+
+A portal and its BFF share a scope. `scope:shared` may depend only on
+`scope:shared`; every other scope may depend on itself and `shared`. This is what
+stops one portal's contract change breaking another.
+
+### `type:` — what kind of thing it is
+
+| Tag                | Means                                                        | May depend on                                      |
+| ------------------ | ------------------------------------------------------------ | -------------------------------------------------- |
+| `type:app`         | An Angular portal                                            | `ui`, `auth`, `contracts`                          |
+| `type:bff`         | A Fastify BFF                                                | `bff-core`, `bff-auth`, `data-access`, `contracts` |
+| `type:ui`          | Presentational components — no HTTP, router or store         | nothing                                            |
+| `type:contracts`   | Zod schemas + inferred types                                 | nothing                                            |
+| `type:auth`        | Frontend session wrapper                                     | `contracts`                                        |
+| `type:bff-core`    | Fastify factory, plugins, guards, env                        | `contracts`                                        |
+| `type:bff-auth`    | An auth method (OIDC/SSO)                                    | `bff-core`, `contracts`                            |
+| `type:data-access` | Generated upstream clients (e.g. the ESL OpenAPI→Zod client) | `contracts`                                        |
+
+Nx's guidance is to keep the number of types low and to say what each one means;
+undocumented types are the actual violation, not the count. Adding one is a
+deliberate act — add it here first, then to `eslint.config.mjs`.
+
 ## Risks and mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Monorepo CI gets slow as it grows | Nx affected-graph + remote cache (Nx Cloud or self-hosted) |
-| Shared libs accumulate too much code | Strict Nx module-boundary lint rules; review for "is this really shared?" |
-| Two BFFs duplicate logic | All non-frontend-specific code lives in `libs/bff/core`; reviewed for drift |
-| Spartan NG ecosystem is young | CDK is mature; we can fork any Spartan component if needed |
-| Magic-link deliverability | Reputable provider, SPF/DKIM/DMARC, bounce/complaint monitoring |
-| Azure AD setup blocks dev | Dev-mode stub IdP in agent BFF — works without a real tenant |
-| Session cookie size grows | Server-side session store (Redis) once we cross ~4 KB |
+| Risk                                 | Mitigation                                                                  |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| Monorepo CI gets slow as it grows    | Nx affected-graph + remote cache (Nx Cloud or self-hosted)                  |
+| Shared libs accumulate too much code | Strict Nx module-boundary lint rules; review for "is this really shared?"   |
+| Two BFFs duplicate logic             | All non-frontend-specific code lives in `libs/bff/core`; reviewed for drift |
+| Spartan NG ecosystem is young        | CDK is mature; we can fork any Spartan component if needed                  |
+| Magic-link deliverability            | Reputable provider, SPF/DKIM/DMARC, bounce/complaint monitoring             |
+| Azure AD setup blocks dev            | Dev-mode stub IdP in agent BFF — works without a real tenant                |
+| Session cookie size grows            | Server-side session store (Redis) once we cross ~4 KB                       |
 
 ---
 
 ## Explicitly out of scope for the POC
 
-Listing these so the manager knows what we're *not* claiming to demonstrate:
+Listing these so the manager knows what we're _not_ claiming to demonstrate:
 
 - Real downstream insurance API integration (we'll stub one upstream)
 - Production-grade observability (basic logging only — full OpenTelemetry comes later)
@@ -297,4 +373,4 @@ Listing these so the manager knows what we're *not* claiming to demonstrate:
 
 ## How this document is meant to be read
 
-Each section is independently editable. As decisions get made, add a new section; as decisions get revised, mark the old one ✅→🔄 and add a new one with a date and the reason for the change. Decisions get *amended*, not silently overwritten — that's how a year from now we'll still understand why the codebase looks the way it does.
+Each section is independently editable. As decisions get made, add a new section; as decisions get revised, mark the old one ✅→🔄 and add a new one with a date and the reason for the change. Decisions get _amended_, not silently overwritten — that's how a year from now we'll still understand why the codebase looks the way it does.

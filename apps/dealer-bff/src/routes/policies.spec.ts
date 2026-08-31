@@ -4,7 +4,7 @@ import {
   validatorCompiler,
   type ZodTypeProvider,
 } from 'fastify-type-provider-zod';
-import { dealerPoliciesResponseSchema } from '@aic/dealer/contracts';
+import { dealerPoliciesResponseSchema } from '@aic-dealer/contracts';
 
 /**
  * A full upstream ESL record — all 24 fields, as the ESL actually returns them.

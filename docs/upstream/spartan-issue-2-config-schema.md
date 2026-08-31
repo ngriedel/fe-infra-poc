@@ -24,7 +24,7 @@ invocation is precisely the one that cannot read them.
   "buildable": false,
   "generateAs": "entrypoint",
   "style": "vega",
-  "importAlias": "@aic/shared/ui",
+  "importAlias": "@aic-shared/ui",
 }
 ```
 

@@ -1,7 +1,7 @@
 {
-  "name": "contracts",
+  "name": "shared-contracts",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/bff/contracts/src",
+  "sourceRoot": "libs/shared/contracts/src",
   "projectType": "library",
   "tags": ["scope:shared", "type:contracts"],
   "targets": {

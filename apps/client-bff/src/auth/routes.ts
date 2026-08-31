@@ -4,8 +4,8 @@ import {
   verifyOtpRequestSchema,
   sessionResponseSchema,
   type SessionUser,
-} from '@aic/bff/contracts';
-import { badRequest, type BffServer, requireSession, unauthenticated } from '@aic/bff/core';
+} from '@aic-shared/contracts';
+import { badRequest, type BffServer, requireSession, unauthenticated } from '@aic-shared/bff-core';
 import { ChallengeStore } from './challenge-store';
 import type { Mailer } from './mailer';
 

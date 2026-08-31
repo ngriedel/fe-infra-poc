@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
-import { HlmButton, UiTransactionCard } from '@aic/shared/ui';
+import { HlmButton, UiTransactionCard } from '@aic-shared/ui';
 import { AuthService } from '../auth/auth.service';
 
 @Component({

@@ -1,13 +1,13 @@
-# bff/auth-sso
+# bff/shared-bff-auth-sso
 
 Shared OIDC / SSO login flow for AIC BFFs.
 
 Any BFF whose frontend authenticates via an identity provider (Azure Entra,
-etc.) composes this on top of `@aic/bff/core`:
+etc.) composes this on top of `@aic-shared/bff-core`:
 
 ```ts
-import { createBffServer, registerSessionRoutes } from '@aic/bff/core';
-import { registerSsoAuthRoutes, StubOidcProvider } from '@aic/bff/auth-sso';
+import { createBffServer, registerSessionRoutes } from '@aic-shared/bff-core';
+import { registerSsoAuthRoutes, StubOidcProvider } from '@aic-shared/bff-auth-sso';
 
 const app = await createBffServer({ ...env });
 await registerSessionRoutes(app);

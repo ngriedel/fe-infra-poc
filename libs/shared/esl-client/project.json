@@ -1,9 +1,9 @@
 {
-  "name": "auth-sso",
+  "name": "shared-esl-client",
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/bff/auth-sso/src",
+  "sourceRoot": "libs/shared/esl-client/src",
   "projectType": "library",
-  "tags": ["scope:shared", "type:bff-auth"],
+  "tags": ["scope:shared", "type:data-access"],
   "targets": {
     "typecheck": {
       "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"

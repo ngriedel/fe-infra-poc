@@ -1,5 +1,5 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import type { SessionUser } from '@aic/bff/contracts';
+import type { SessionUser } from '@aic-shared/contracts';
 import { requireSession } from './require-session';
 import { AppError } from '../errors';
 
