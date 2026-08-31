@@ -1,5 +1,5 @@
-import { healthResponseSchema } from '@aic/bff/contracts';
-import type { BffServer } from '@aic/bff/core';
+import { healthResponseSchema } from '@aic-shared/contracts';
+import type { BffServer } from '@aic-shared/bff-core';
 
 export async function registerHealthRoutes(app: BffServer): Promise<void> {
   app.get('/api/health', {

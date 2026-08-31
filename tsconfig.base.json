@@ -25,15 +25,15 @@
     "noPropertyAccessFromIndexSignature": true,
     "forceConsistentCasingInFileNames": true,
     "paths": {
-      "@aic/shared/ui": ["./libs/shared/ui/src/index.ts"],
-      "@aic/shared/auth": ["./libs/shared/auth/src/index.ts"],
-      "@aic/bff/contracts": ["./libs/bff/contracts/src/index.ts"],
-      "@aic/bff/esl-client": ["./libs/bff/esl-client/src/index.ts"],
-      "@aic/bff/core": ["./libs/bff/core/src/index.ts"],
-      "@aic/agent/contracts": ["./libs/agent/contracts/src/index.ts"],
-      "@aic/dealer/contracts": ["./libs/dealer/contracts/src/index.ts"],
-      "@aic/broker/contracts": ["./libs/broker/contracts/src/index.ts"],
-      "@aic/bff/auth-sso": ["./libs/bff/auth-sso/src/index.ts"]
+      "@aic-shared/ui": ["./libs/shared/ui/src/index.ts"],
+      "@aic-shared/auth": ["./libs/shared/auth/src/index.ts"],
+      "@aic-agent/contracts": ["./libs/agent/contracts/src/index.ts"],
+      "@aic-dealer/contracts": ["./libs/dealer/contracts/src/index.ts"],
+      "@aic-broker/contracts": ["./libs/broker/contracts/src/index.ts"],
+      "@aic-shared/contracts": ["./libs/shared/contracts/src/index.ts"],
+      "@aic-shared/bff-core": ["./libs/shared/bff-core/src/index.ts"],
+      "@aic-shared/bff-auth-sso": ["./libs/shared/bff-auth-sso/src/index.ts"],
+      "@aic-shared/esl-client": ["./libs/shared/esl-client/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]

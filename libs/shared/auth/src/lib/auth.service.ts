@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
-import type { SessionResponse, SessionUser } from '@aic/bff/contracts';
+import type { SessionResponse, SessionUser } from '@aic-shared/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

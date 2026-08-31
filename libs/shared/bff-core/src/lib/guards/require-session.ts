@@ -1,5 +1,5 @@
 import type { FastifyRequest, FastifyReply } from 'fastify';
-import type { SessionUser } from '@aic/bff/contracts';
+import type { SessionUser } from '@aic-shared/contracts';
 import { unauthenticated } from '../errors';
 
 /**

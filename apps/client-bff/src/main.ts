@@ -1,4 +1,8 @@
-import { createBffServer, registerSessionRoutes, registerGracefulShutdown } from '@aic/bff/core';
+import {
+  createBffServer,
+  registerSessionRoutes,
+  registerGracefulShutdown,
+} from '@aic-shared/bff-core';
 import { env } from './env';
 import { registerAuthRoutes } from './auth/routes';
 import { createMailer } from './auth/mailer';

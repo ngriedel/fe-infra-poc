@@ -1,5 +1,5 @@
 import { Route } from '@angular/router';
-import { requireAuth } from '@aic/shared/auth';
+import { requireAuth } from '@aic-shared/auth';
 
 export const appRoutes: Route[] = [
   {

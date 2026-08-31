@@ -1,4 +1,4 @@
-import { loadEnv } from '@aic/bff/core';
+import { loadEnv } from '@aic-shared/bff-core';
 import * as z from 'zod';
 
 const rawEnv = loadEnv({

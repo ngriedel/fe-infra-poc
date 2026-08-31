@@ -5,7 +5,7 @@ import {
   serializerCompiler,
   validatorCompiler,
 } from 'fastify-type-provider-zod';
-import type { SessionUser } from '@aic/bff/contracts';
+import type { SessionUser } from '@aic-shared/contracts';
 import { securityPlugin } from './plugins/security.plugin';
 import { sessionPlugin } from './plugins/session.plugin';
 import { errorHandlerPlugin } from './plugins/error-handler.plugin';

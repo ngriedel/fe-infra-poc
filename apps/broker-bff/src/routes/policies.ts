@@ -1,6 +1,6 @@
-import { requireSession, unauthenticated, type BffServer } from '@aic/bff/core';
-import { brokerPoliciesResponseSchema, type BrokerPolicy } from '@aic/broker/contracts';
-import { createEslClient, type Policy as EslPolicy } from '@aic/bff/esl-client';
+import { requireSession, unauthenticated, type BffServer } from '@aic-shared/bff-core';
+import { brokerPoliciesResponseSchema, type BrokerPolicy } from '@aic-broker/contracts';
+import { createEslClient, type Policy as EslPolicy } from '@aic-shared/esl-client';
 
 /**
  * Project the fat upstream ESL record down to the BROKER view.

@@ -2,8 +2,8 @@ import {
   oidcCallbackQuerySchema,
   oidcLoginQuerySchema,
   safeReturnToSchema,
-} from '@aic/bff/contracts';
-import { badRequest, type BffServer } from '@aic/bff/core';
+} from '@aic-shared/contracts';
+import { badRequest, type BffServer } from '@aic-shared/bff-core';
 import type { OidcProvider } from './oidc-provider';
 
 const STATE_COOKIE = 'oidc_state';
@@ -18,7 +18,7 @@ export interface SsoAuthRoutesOptions {
  * Register the SSO login flow (`/api/auth/login` + `/api/auth/callback`).
  *
  * Session read + logout are NOT here — compose `registerSessionRoutes`
- * from `@aic/bff/core` alongside this.
+ * from `@aic-shared/bff-core` alongside this.
  */
 export async function registerSsoAuthRoutes(
   app: BffServer,

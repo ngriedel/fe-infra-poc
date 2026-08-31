@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { HlmButton, HlmInput, HlmLabel } from '@aic/shared/ui';
+import { HlmButton, HlmInput, HlmLabel } from '@aic-shared/ui';
 import { AuthService } from './auth.service';
 
 @Component({

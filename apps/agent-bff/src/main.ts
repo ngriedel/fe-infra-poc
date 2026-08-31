@@ -1,10 +1,14 @@
-import { createBffServer, registerSessionRoutes, registerGracefulShutdown } from '@aic/bff/core';
+import {
+  createBffServer,
+  registerSessionRoutes,
+  registerGracefulShutdown,
+} from '@aic-shared/bff-core';
 import {
   registerSsoAuthRoutes,
   StubOidcProvider,
   EntraOidcProvider,
   type OidcProvider,
-} from '@aic/bff/auth-sso';
+} from '@aic-shared/bff-auth-sso';
 import { env } from './env';
 import { registerHealthRoutes } from './routes/health';
 import { registerPolicyRoutes } from './routes/policies';

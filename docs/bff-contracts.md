@@ -35,9 +35,9 @@ frontends quietly rebuilds the one-generic-API problem that the BFF pattern exis
 solve: adding a field for the agent app changes the dealer app's types, and removing one
 for dealers breaks brokers. The apps stop being independent.
 
-So `policy.ts` moved **out** of `@aic/bff/contracts` and into three per-audience libs.
+So `policy.ts` moved **out** of `@aic-shared/contracts` and into three per-audience libs.
 
-What stays in `@aic/bff/contracts` is only what is genuinely cross-cutting — the session
+What stays in `@aic-shared/contracts` is only what is genuinely cross-cutting — the session
 user shape, the error envelope, health. Every pair really does share those.
 
 ```
@@ -110,7 +110,7 @@ apps/dealer/src/app/home/home-page.component.ts
 ```
 
 That message is from an actual run: the rule was tested by having the dealer app import
-`@aic/agent/contracts` and confirming lint rejected it. It also caught a genuine mistake
+`@aic-agent/contracts` and confirming lint rejected it. It also caught a genuine mistake
 while this was being built — the first draft of the dealer projection test imported the
 agent and broker schemas to compare shapes, and was refused.
 

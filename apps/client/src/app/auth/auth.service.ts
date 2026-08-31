@@ -7,7 +7,7 @@ import type {
   SessionResponse,
   SessionUser,
   VerifyOtpRequest,
-} from '@aic/bff/contracts';
+} from '@aic-shared/contracts';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {

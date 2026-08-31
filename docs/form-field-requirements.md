@@ -1,7 +1,7 @@
 # Shared form-field requirements (spec)
 
 Inventory of the old corporate field library, to be re-built on **Signal Forms**
-(`@angular/forms/signals`) + the shared UI lib (`@aic/shared/ui`). Source repo is
+(`@angular/forms/signals`) + the shared UI lib (`@aic-shared/ui`). Source repo is
 inaccessible; this is captured from description.
 
 **Scope (current focus):** text inputs, dropdowns (select), checkboxes.
@@ -11,14 +11,14 @@ inaccessible; this is captured from description.
 ## Layer 1 — Input sanitization (composable attribute directives)
 
 Keystroke/value filters and transforms applied to a native `<input>`. In Signal
-Forms these compose *next to* `[formField]` on the same element — they sanitize the
+Forms these compose _next to_ `[formField]` on the same element — they sanitize the
 DOM value and let the field model pick up the cleaned value (no ControlValueAccessor).
 
-| # | Old behaviour | Notes for new version |
-|---|---|---|
-| 1 | **Numeric only** — alpha chars ignored entirely | Digit filter on `beforeinput`/paste |
-| 3 | **Named text policies** — e.g. `passport` = alphanumeric → UPPERCASE; `name` = block umlauts (server rejects them); "a few others" | One configurable directive with named presets, OR small composable directives. Preset list TBD. |
-| 4 | **Trim** | Likely on blur. "Probably a better way now" — agreed; may fold into a transform. |
+| #   | Old behaviour                                                                                                                      | Notes for new version                                                                           |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| 1   | **Numeric only** — alpha chars ignored entirely                                                                                    | Digit filter on `beforeinput`/paste                                                             |
+| 3   | **Named text policies** — e.g. `passport` = alphanumeric → UPPERCASE; `name` = block umlauts (server rejects them); "a few others" | One configurable directive with named presets, OR small composable directives. Preset list TBD. |
+| 4   | **Trim**                                                                                                                           | Likely on blur. "Probably a better way now" — agreed; may fold into a transform.                |
 
 Transforms seen so far: **uppercase**, **trim**, **strip disallowed chars** (umlauts),
 **filter to character class** (numeric, alphanumeric).
@@ -35,17 +35,17 @@ Existing masks: **number, phone, currency, alphanumeric, uppercase**
 
 ## Layer 3 — UX behaviours
 
-| # | Old behaviour | Notes |
-|---|---|---|
-| 2 | **Select-all on focus/click** — so the user can overtype without backspacing | Trivial directive: `el.select()` on focus |
+| #   | Old behaviour                                                                | Notes                                     |
+| --- | ---------------------------------------------------------------------------- | ----------------------------------------- |
+| 2   | **Select-all on focus/click** — so the user can overtype without backspacing | Trivial directive: `el.select()` on focus |
 
 ---
 
 ## Overlaps / simplifications to resolve
 
-- **uppercase**: it's a *transform*, not a structural mask. Unify as a transform (Layer 1),
+- **uppercase**: it's a _transform_, not a structural mask. Unify as a transform (Layer 1),
   not a mask.
-- **alphanumeric**: as a *filter* (reject other chars) vs as a *mask* (enforce length/slots)
+- **alphanumeric**: as a _filter_ (reject other chars) vs as a _mask_ (enforce length/slots)
   are different. Decide which is actually needed where.
 - **trim**: a transform; doesn't need its own mechanism.
 
@@ -69,6 +69,7 @@ code. Char-filtering/uppercase/trim are better as small input-event directives.
 - First preset shipped: `numberMask` in `libs/shared/ui/src/lib/form-field/field-masks.ts`.
 
 ## Remaining open decisions
+
 2. **Text policies as presets vs directives.** One `[textPolicy]="'passport'"` directive
    with a named registry, or separate directives (`[alphanumericUpper]`, `[noUmlauts]`)?
 3. **Umlaut handling.** Block on input, strip, or transliterate (ä→ae)? Old = block. Server

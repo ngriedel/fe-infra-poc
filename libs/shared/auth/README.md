@@ -13,4 +13,4 @@ Wraps the BFF session contract behind a small Angular surface:
 The browser never sees a token — the BFF owns the OIDC flow and issues a session
 cookie. Each app keeps its own branded login page that calls `auth.beginLogin()`.
 
-Consumed via the `@aic/shared/auth` path alias.
+Consumed via the `@aic-shared/auth` path alias.

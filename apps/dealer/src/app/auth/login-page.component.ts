@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { HlmButton } from '@aic/shared/ui';
-import { AuthService } from '@aic/shared/auth';
+import { HlmButton } from '@aic-shared/ui';
+import { AuthService } from '@aic-shared/auth';
 
 @Component({
   selector: 'dealer-login-page',

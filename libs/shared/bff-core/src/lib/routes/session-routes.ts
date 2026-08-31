@@ -1,4 +1,4 @@
-import { sessionResponseSchema } from '@aic/bff/contracts';
+import { sessionResponseSchema } from '@aic-shared/contracts';
 import type { BffServer } from '../server';
 import { requireSession } from '../guards/require-session';
 
@@ -8,7 +8,7 @@ import { requireSession } from '../guards/require-session';
  *   - GET  /api/auth/session — current user, or 401
  *   - POST /api/auth/logout  — clear the session cookie
  *
- * Auth-method libs (e.g. `@aic/bff/auth-sso`) own only the login flow;
+ * Auth-method libs (e.g. `@aic-shared/bff-auth-sso`) own only the login flow;
  * the read + teardown of a session is shared here.
  */
 export async function registerSessionRoutes(app: BffServer): Promise<void> {
