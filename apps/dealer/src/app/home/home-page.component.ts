@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { HttpClient, type HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { httpResource } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { HlmButton, HlmTableImports } from '@aic-shared/ui';
 import { AuthService } from '@aic-shared/auth';
-import type { DealerPoliciesResponse, DealerPolicy } from '@aic-dealer/contracts';
+import { dealerPoliciesResponseSchema } from '@aic-dealer/contracts';
 
 @Component({
   selector: 'dealer-home-page',
@@ -29,15 +29,16 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic-dealer/contracts
             <h2 class="text-sm font-medium">Upstream policies</h2>
             <p class="text-xs text-muted-foreground">
               Fetched on demand through the whole authenticated chain: Angular → dealer-bff (session
-              cookie, audience-checked) → ESL (identity forwarded as X-User-* headers).
+              cookie, audience-checked) → ESL (identity forwarded as X-User-* headers), then parsed
+              against the shared Zod contract before it reaches the template.
             </p>
           </div>
-          <button hlmBtn size="sm" [disabled]="loading()" (click)="fetchPolicies()">
-            {{ loading() ? 'Fetching…' : 'Fetch policies' }}
+          <button hlmBtn size="sm" [disabled]="policies.isLoading()" (click)="fetchPolicies()">
+            {{ policies.isLoading() ? 'Fetching…' : 'Fetch policies' }}
           </button>
         </div>
 
-        @if (error(); as message) {
+        @if (errorMessage(); as message) {
           <p
             class="rounded-md border border-error bg-error-filled px-3 py-2 text-xs text-foreground"
           >
@@ -45,7 +46,7 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic-dealer/contracts
           </p>
         }
 
-        @if (policies(); as rows) {
+        @if (policies.hasValue()) {
           <div hlmTableContainer class="rounded-md border border-border">
             <table hlmTable>
               <thead hlmTableHeader class="bg-muted">
@@ -62,7 +63,7 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic-dealer/contracts
                 </tr>
               </thead>
               <tbody hlmTableBody>
-                @for (p of rows; track p.id) {
+                @for (p of policies.value(); track p.id) {
                   <tr hlmTableRow>
                     <td hlmTableCell class="font-mono text-xs">{{ p.id }}</td>
                     <td hlmTableCell>{{ p.product }}</td>
@@ -92,35 +93,40 @@ import type { DealerPoliciesResponse, DealerPolicy } from '@aic-dealer/contracts
 export class HomePage {
   protected readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly http = inject(HttpClient);
 
-  /** `null` until the first fetch, so the table stays hidden on load. */
-  protected readonly policies = signal<DealerPolicy[] | null>(null);
-  protected readonly loading = signal(false);
-  protected readonly error = signal<string | null>(null);
+  /** Stays `false` until the button is clicked, which keeps the resource idle. */
+  private readonly requested = signal(false);
 
   /**
-   * Same-origin call via the dev proxy, so the session cookie rides along.
-   * dealer-bff's `requireSession` rejects anything that isn't a dealer session
-   * before it ever reaches the ESL.
+   * The whole fetch: request, loading flag, error channel and contract validation.
+   *
+   * Returning `undefined` from the url function is what holds the resource in
+   * `idle` — no request is issued and `value()` has nothing, so the table stays
+   * hidden. `parse` runs the shared Zod schema, so a BFF that drifts from the
+   * contract surfaces as an error here rather than as undefined fields in the
+   * template.
    */
+  protected readonly policies = httpResource(
+    () => (this.requested() ? '/api/policies' : undefined),
+    { parse: (raw: unknown) => dealerPoliciesResponseSchema.parse(raw).policies },
+  );
+
+  /**
+   * A schema failure arrives with `statusCode() === 200` — the transport worked
+   * and the payload did not match. That is worth distinguishing from a 401.
+   */
+  protected readonly errorMessage = computed(() => {
+    if (!this.policies.error()) return null;
+    const code = this.policies.statusCode();
+    if (code === 401) return 'Not authenticated — your session may have expired. Sign in again.';
+    if (code === 200) return 'The BFF returned data that does not match the agreed contract.';
+    return `Could not reach the ESL through the BFF (HTTP ${code ?? 'no response'}).`;
+  });
+
   protected fetchPolicies(): void {
-    this.loading.set(true);
-    this.error.set(null);
-    this.http.get<DealerPoliciesResponse>('/api/policies').subscribe({
-      next: (res) => {
-        this.policies.set(res.policies);
-        this.loading.set(false);
-      },
-      error: (err: HttpErrorResponse) => {
-        this.error.set(
-          err.status === 401
-            ? 'Not authenticated — your session may have expired. Sign in again.'
-            : `Could not reach the ESL through the BFF (HTTP ${err.status}).`,
-        );
-        this.loading.set(false);
-      },
-    });
+    // First click starts it; later clicks re-run it. `reload()` is a no-op while idle.
+    if (this.requested()) this.policies.reload();
+    else this.requested.set(true);
   }
 
   async logout() {

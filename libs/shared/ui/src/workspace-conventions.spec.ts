@@ -54,10 +54,11 @@ function libProjects(): Array<{ dir: string; name: string | undefined }> {
 }
 
 function aliases(): Record<string, string> {
-  const raw = readFileSync(join(ROOT, 'tsconfig.base.json'), 'utf8').replace(
-    /\/\*[\s\S]*?\*\//g,
-    '',
-  );
+  // tsconfig is JSONC: strip block AND line comments before parsing. A stray
+  // line comment in tsconfig.base.json broke this once during the Angular 22 bump.
+  const raw = readFileSync(join(ROOT, 'tsconfig.base.json'), 'utf8')
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/^\s*\/\/.*$/gm, '');
   return JSON.parse(raw).compilerOptions.paths as Record<string, string>;
 }
 
