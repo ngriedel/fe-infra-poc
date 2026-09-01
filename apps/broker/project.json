@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "broker",
   "sourceRoot": "apps/broker/src",
-  "tags": ["scope:broker", "type:app"],
+  "tags": ["scope:broker", "type:app", "platform:browser"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

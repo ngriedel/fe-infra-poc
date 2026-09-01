@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/dealer/contracts/src",
   "projectType": "library",
-  "tags": ["scope:dealer", "type:contracts"],
+  "tags": ["scope:dealer", "type:contracts", "platform:browser", "platform:node"],
   "targets": {
     "typecheck": {
       "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"

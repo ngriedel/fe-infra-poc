@@ -3,7 +3,7 @@
   "$schema": "../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/shared/bff-core/src",
   "projectType": "library",
-  "tags": ["scope:shared", "type:bff-core"],
+  "tags": ["scope:shared", "type:bff-core", "platform:node"],
   "targets": {
     "typecheck": {
       "command": "tsc --noEmit -p {projectRoot}/tsconfig.lib.json"

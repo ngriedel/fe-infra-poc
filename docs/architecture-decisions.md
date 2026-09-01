@@ -318,6 +318,21 @@ A portal and its BFF share a scope. `scope:shared` may depend only on
 `scope:shared`; every other scope may depend on itself and `shared`. This is what
 stops one portal's contract change breaking another.
 
+### `platform:` — where the code runs
+
+`browser` · `node`
+
+Nx treats runtime as a **tag** dimension rather than a folder one, and it catches
+what folders cannot: a browser bundle pulling in something that assumes Node.
+
+`platform:browser` may depend only on `platform:browser`; `platform:node` only on
+`platform:node`. The four contracts libs are **dual-tagged** — they are pure Zod
+schemas imported by both a browser app and a Node BFF, which is the reason
+per-pair contract libs exist at all.
+
+Every project must carry a platform tag. An untagged one is unreachable from
+either side, so adding a project means adding its tag in the same commit.
+
 ### `type:` — what kind of thing it is
 
 | Tag                | Means                                                        | May depend on                                      |

@@ -92,5 +92,5 @@
       }
     }
   },
-  "tags": ["scope:dealer", "type:bff"]
+  "tags": ["scope:dealer", "type:bff", "platform:node"]
 }
