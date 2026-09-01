@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "dealer",
   "sourceRoot": "apps/dealer/src",
-  "tags": ["scope:dealer", "type:app"],
+  "tags": ["scope:dealer", "type:app", "platform:browser"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",

@@ -92,5 +92,5 @@
       }
     }
   },
-  "tags": ["scope:client", "type:bff"]
+  "tags": ["scope:client", "type:bff", "platform:node"]
 }

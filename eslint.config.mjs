@@ -31,6 +31,18 @@ export default [
               onlyDependOnLibsWithTags: ['scope:broker', 'scope:shared'],
             },
             { sourceTag: 'scope:shared', onlyDependOnLibsWithTags: ['scope:shared'] },
+            // Where the code RUNS. Nx treats this as a tag dimension rather than a
+            // folder one, and it catches the mistake folders cannot: a browser
+            // bundle pulling in something that assumes Node. The contracts libs
+            // are dual-tagged on purpose — pure Zod schemas, imported by both a
+            // browser app and a Node BFF, which is why per-pair contract libs
+            // exist at all. Every project must carry a platform tag; an untagged
+            // one is unreachable from either side.
+            {
+              sourceTag: 'platform:browser',
+              onlyDependOnLibsWithTags: ['platform:browser'],
+            },
+            { sourceTag: 'platform:node', onlyDependOnLibsWithTags: ['platform:node'] },
             // Type layering: what each kind of project may consume.
             {
               sourceTag: 'type:app',

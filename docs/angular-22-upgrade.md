@@ -47,12 +47,19 @@ Two deprecations became errors, handled differently on purpose:
 
 ## Still open
 
-- A `platform:browser` / `platform:node` tag axis (see architecture-decisions).
-- `openid-client` v5 → v6 — real debt in the auth path, belongs on the security
-  backlog with its own window.
-- A jest worker sometimes fails to exit gracefully under the full 19-project
-  parallel run. Not reproducible in any single project, so it reads as a jest-30
-  worker-pool artifact rather than a leak, but it is unexplained.
+- **`openid-client` v5 → v6** — the one real piece of debt left, and deliberately
+  not attempted here. See [bff-security-review.md](bff-security-review.md); it needs
+  its own window with the auth flow re-tested against a real tenant.
+
+**Closed since this file was written:**
+
+- ~~A `platform:browser` / `platform:node` tag axis~~ — added 2026-09-01, with the
+  contracts libs dual-tagged and the rule verified to reject a browser project
+  importing a Node lib.
+- ~~A jest worker sometimes fails to exit gracefully~~ — **no longer reproduces.**
+  Re-checked on 2026-09-01: zero occurrences in a test-only run and zero in the
+  full gate. It was seen during the upgrade itself and is recorded here only so it
+  is recognised rather than re-investigated from scratch if it returns.
 
 ---
 

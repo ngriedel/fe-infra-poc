@@ -30,6 +30,27 @@ adversarial pass caught this as a false positive.
 
 ## Open — recommended, not applied
 
+### `openid-client` 5.7.1 → 6.8.7 — scoped 2026-09-01, not attempted
+
+The largest single piece of debt in the auth path, and not a version bump. Three
+things have to move together, which is why it wants its own window:
+
+1. **v6 is pure ESM** (`"type": "module"`). All four BFFs build CJS with
+   `bundle: false`, and `redis-store.ts` carries a comment saying v5 was chosen
+   for exactly that reason. Either the import becomes a dynamic `import()`, or the
+   BFF build target moves to ESM — which re-tests the Nx runtime path resolver that
+   makes `bundle: false` work.
+2. **The API is different, not renamed.** `Issuer` and `generators` — both used in
+   `entra-provider.ts` — do not exist in v6, which is functional throughout. This
+   is a rewrite of the relying-party code, not a find-and-replace.
+3. **It cannot be verified locally.** `OIDC_MODE` defaults to `stub`, so the real
+   Entra path is exercised only against a tenant with an app registration. Landing
+   an untested rewrite of the login flow is worse than the debt.
+
+Sequence when it is taken on: move the BFF build to ESM first and prove the
+existing v5 flow still works, then rewrite the provider, then verify against a real
+tenant before merging. Do not bundle it with anything else.
+
 These are prod-hardening / design decisions (the auth is intentionally stubbed for
 the POC), ordered roughly by value:
 

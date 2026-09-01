@@ -84,5 +84,5 @@
       }
     }
   },
-  "tags": ["scope:broker", "type:bff"]
+  "tags": ["scope:broker", "type:bff", "platform:node"]
 }

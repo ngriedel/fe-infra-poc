@@ -84,5 +84,5 @@
       }
     }
   },
-  "tags": ["scope:agent", "type:bff"]
+  "tags": ["scope:agent", "type:bff", "platform:node"]
 }

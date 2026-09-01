@@ -4,7 +4,7 @@
   "projectType": "application",
   "prefix": "client",
   "sourceRoot": "apps/client/src",
-  "tags": ["scope:client", "type:app"],
+  "tags": ["scope:client", "type:app", "platform:browser"],
   "targets": {
     "build": {
       "executor": "@angular/build:application",
