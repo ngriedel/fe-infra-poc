@@ -213,7 +213,7 @@ describe('palette contrast', () => {
         const base = set[baseToken];
         return { token, baseToken, base, fg: set[token] as { hex: string; note: string } };
       })
-      .filter((p) => p.base);
+      .filter((p): p is typeof p & { base: { hex: string; note: string } } => Boolean(p.base));
   }
 
   describe.each(['light', 'dark'] as const)('%s mode', (scope) => {
@@ -224,7 +224,7 @@ describe('palette contrast', () => {
     });
 
     it.each(cases.map((c) => [c.baseToken, c] as const))('%s meets AA', (_name, c) => {
-      expect(contrast(c.base!.hex, c.fg.hex)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrast(c.base.hex, c.fg.hex)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
     it.each(cases.map((c) => [c.baseToken, c] as const))(
@@ -232,7 +232,7 @@ describe('palette contrast', () => {
       (_name, c) => {
         const documented = /([0-9]+\.[0-9]+):1/.exec(c.fg.note);
         if (!documented) return; // not every pair carries a comment
-        const actual = contrast(c.base!.hex, c.fg.hex);
+        const actual = contrast(c.base.hex, c.fg.hex);
         expect(actual).toBeCloseTo(Number(documented[1]), 2);
       },
     );
