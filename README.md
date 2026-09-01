@@ -19,19 +19,39 @@ See [docs/architecture-decisions.md](docs/architecture-decisions.md) for the why
 
 ## Prerequisites
 
-- **Node 24 LTS** (`.nvmrc` is `24`; install via `nvm-windows` or the official MSI)
-- **pnpm 10+** (auto-managed via corepack — `corepack enable pnpm` once)
+- **Node 24.15+** (`.nvmrc` is `24`). Angular 22 requires `^22.22.3 || ^24.15.0 || >=26.0.0`;
+  `engines.node` enforces `>=24.15.0`.
+- **pnpm 10** — managed by corepack, which reads `packageManager` from `package.json`
+  so you get the pinned 10.33.2:
+  ```bash
+  corepack enable
+  ```
+- **Docker** — three local services are required, not optional. Nothing works without them.
 
 ## First-time setup
 
 ```bash
 pnpm install
-# Both BFFs need a .env file. The defaults in .env.example work for dev:
+
+# Local infra: the upstream stub (ESL), Redis, and a mail catcher for the OTP codes.
+# Nothing runs without these — the BFFs call the stub on :8081 and post mail to :1025.
+docker compose up -d
+
+# All FOUR BFFs need a .env. The committed defaults work for dev as-is:
 cp apps/client-bff/.env.example apps/client-bff/.env
-cp apps/agent-bff/.env.example apps/agent-bff/.env
+cp apps/agent-bff/.env.example  apps/agent-bff/.env
+cp apps/dealer-bff/.env.example apps/dealer-bff/.env
+cp apps/broker-bff/.env.example apps/broker-bff/.env
 ```
 
-> The committed `.env.example` files contain dev-only `SESSION_SECRET`s. For staging/prod, generate real ones with `openssl rand -hex 32` (or any 64-char hex string).
+> The committed `.env.example` files contain dev-only `SESSION_SECRET`s. For staging/prod,
+> generate real ones with `openssl rand -hex 32` (or any 64-char hex string).
+
+| Container     | Port        | What it is                                                         |
+| ------------- | ----------- | ------------------------------------------------------------------ |
+| `aic-esl`     | 8081        | Stand-in upstream API. Source in `./esl-stub` — not an Nx project. |
+| `aic-redis`   | 6379        | Present for session work; the POC's sessions are cookie-based.     |
+| `aic-mailpit` | 1025 / 8025 | Catches OTP mail. **Read the codes at <http://localhost:8025>.**   |
 
 ## Run everything in dev
 
@@ -39,16 +59,39 @@ cp apps/agent-bff/.env.example apps/agent-bff/.env
 pnpm dev
 ```
 
-That runs all four projects in parallel via `nx run-many -t serve`:
+That runs all **eight** projects in parallel via `nx run-many -t serve` — four Angular
+apps and four BFFs:
 
-| App             | URL                     |
-| --------------- | ----------------------- |
-| Client frontend | <http://localhost:4200> |
-| Client BFF      | <http://localhost:3001> |
-| Agent frontend  | <http://localhost:4201> |
-| Agent BFF       | <http://localhost:3002> |
+| Portal | Frontend                | BFF                     | Auth                            |
+| ------ | ----------------------- | ----------------------- | ------------------------------- |
+| client | <http://localhost:4200> | <http://localhost:3001> | magic link + OTP (self-owned)   |
+| agent  | <http://localhost:4201> | <http://localhost:3002> | Azure AD OIDC (stubbed locally) |
+| dealer | <http://localhost:4202> | <http://localhost:3003> | Entra External ID (stubbed)     |
+| broker | <http://localhost:4203> | <http://localhost:3004> | Entra External ID (stubbed)     |
 
-Each Angular dev server proxies `/api/*` to its matching BFF (see `proxy.conf.json`), so the browser sees a single origin and HttpOnly session cookies just work.
+To run one portal instead of all eight — much lighter:
+
+```bash
+nx serve dealer-bff   # then, in another shell:
+nx serve dealer
+```
+
+Each Angular dev server proxies `/api/*` to its matching BFF (see `proxy.conf.json`), so
+the browser sees a single origin and HttpOnly session cookies just work.
+
+## Checking it actually works
+
+Verified end to end on 2026-09-01, after the Angular 22 upgrade:
+
+```bash
+curl http://localhost:3003/api/health            # {"status":"ok","name":"dealer-bff"}
+curl http://localhost:3003/api/policies          # 401 UNAUTHENTICATED — the guard works
+curl http://localhost:4202/api/health            # same payload through the dev proxy
+```
+
+For the client OTP flow, the code is **emailed, not returned in the response** — open
+<http://localhost:8025> to read it. `devOtp` appears in the response only when the BFF's
+env enables it.
 
 ## Trying the auth flows
 
@@ -97,35 +140,52 @@ nx affected -t lint test build typecheck
 
 ```
 apps/
-  client/              # consumer-facing Angular app  (port 4200, proxy → 3001)
-  client-bff/          # Fastify BFF — magic-link + OTP (port 3001)
-  agent/               # agent-facing Angular app     (port 4201, proxy → 3002)
-  agent-bff/           # Fastify BFF — OIDC (stubbed) (port 3002)
-  client-e2e/          # Playwright e2e for client
-  agent-e2e/           # Playwright e2e for agent
-libs/
-  shared/
-    ui/                  # Spartan helm components (brain-wired) + cn/classes utils
-  bff/
-    contracts/           # zod schemas + inferred TS types (shared FE+BE)
-    core/                # Fastify factory + plugins + AppError + env loader
-docs/
-  architecture-decisions.md   # the pitch / decision log
-  bff-latency.md              # latency reasoning for the BFF pattern
-  session-strategy.md         # cookie vs server-side sessions; do we need Redis?
+  client/  client-bff/     consumer portal — magic link + OTP   (4200 → 3001)
+  agent/   agent-bff/      agent portal — Azure AD OIDC         (4201 → 3002)
+  dealer/  dealer-bff/     dealer portal — Entra External ID    (4202 → 3003)
+  broker/  broker-bff/     broker portal — Entra External ID    (4203 → 3004)
+  client-e2e/  agent-e2e/  Playwright
+
+libs/                      one grouping folder per SCOPE, never by technical type
+  shared/                  scope:shared — anything more than one portal may use
+    ui/                    helm primitives + theme tokens + cn/classes
+    auth/                  frontend session wrapper
+    contracts/             Zod schemas shared by every BFF and frontend
+    bff-core/              Fastify factory, plugins, guards, env loader
+    bff-auth-sso/          the OIDC/SSO login flow
+    esl-client/            generated client for the upstream stub
+  agent/contracts/         scope:agent  — the agent BFF↔frontend contract, and nobody else's
+  broker/contracts/        scope:broker
+  dealer/contracts/        scope:dealer
+
+esl-stub/                  stand-in upstream API (Docker, port 8081). Deliberately NOT an Nx project.
+tools/spartan-add.js       generates a Spartan primitive — see docs/spartan-ui-architecture.md §2
+docs/                      decisions, reviews and guides — start with handover.md
 ```
+
+Each portal gets its **own** contracts lib on purpose: the same upstream record projects to
+a different shape per audience, which is the whole point of a BFF. Nx tags enforce it — an
+agent lib cannot import `@aic-dealer/contracts` even by accident.
 
 ## Path aliases
 
-| Import path             | Resolves to                                  |
-| ----------------------- | -------------------------------------------- |
-| `@aic-shared/ui`        | Spartan helm components + cn/classes utils   |
-| `@aic-shared/contracts` | Zod schemas + inferred types                 |
-| `@aic-shared/bff-core`  | Fastify factory, plugins, guards, env loader |
+Project name is `<scope>-<leaf>`; the alias is `@aic-<scope>/<leaf>`, so the first dash
+becomes the slash. One slash only — an alias is a package name, and npm allows exactly one.
+`workspace-conventions.spec.ts` fails the build if either drifts.
+
+| Import path                            | Resolves to                                  |
+| -------------------------------------- | -------------------------------------------- |
+| `@aic-shared/ui`                       | helm primitives, theme tokens, cn/classes    |
+| `@aic-shared/auth`                     | frontend session service                     |
+| `@aic-shared/contracts`                | Zod schemas shared across all portals        |
+| `@aic-shared/bff-core`                 | Fastify factory, plugins, guards, env loader |
+| `@aic-shared/bff-auth-sso`             | OIDC/SSO login routes                        |
+| `@aic-shared/esl-client`               | generated upstream client                    |
+| `@aic-{agent,broker,dealer}/contracts` | that portal's own BFF↔frontend contract      |
 
 ## How the BFFs serve workspace deps
 
-Both BFFs build with `@nx/esbuild` (`bundle: false`). Nx injects a tiny runtime resolver into `main.js` that maps `@aic-*/*` imports to source files copied alongside the output. So even without bundling, the dist is self-contained and `node dist/apps/<bff>/main.js` works after a build.
+All four BFFs build with `@nx/esbuild` (`bundle: false`). Nx injects a tiny runtime resolver into `main.js` that maps `@aic-*/*` imports to source files copied alongside the output. So even without bundling, the dist is self-contained and `node dist/apps/<bff>/main.js` works after a build.
 
 ## Status
 
