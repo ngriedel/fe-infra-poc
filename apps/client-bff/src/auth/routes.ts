@@ -5,7 +5,7 @@ import {
   sessionResponseSchema,
   type SessionUser,
 } from '@aic-shared/contracts';
-import { badRequest, type BffServer, requireSession, unauthenticated } from '@aic-shared/bff-core';
+import { badRequest, type BffServer, requireSession, notFound } from '@aic-shared/bff-core';
 import { ChallengeStore } from './challenge-store';
 import type { Mailer } from './mailer';
 
@@ -94,9 +94,16 @@ export async function registerAuthRoutes(app: BffServer, opts: AuthRoutesOptions
     },
   });
 
-  // Helpful error when /api/auth/session is hit unauthenticated and we want
-  // a typed 401 envelope rather than the generic one.
+  /**
+   * Unknown routes, in the typed envelope rather than Fastify's generic one.
+   *
+   * `requireSession` runs first on purpose: an anonymous probe gets 401 and learns
+   * nothing about which routes exist. A caller who IS signed in gets an honest
+   * 404 — this previously threw `unauthenticated()` unconditionally, so a valid
+   * session hitting a wrong path was told "Not signed in", which sends you
+   * debugging the session instead of the URL.
+   */
   app.setNotFoundHandler({ preHandler: requireSession }, async () => {
-    throw unauthenticated();
+    throw notFound();
   });
 }
